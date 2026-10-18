@@ -9,7 +9,7 @@ final dashboardRepositoryProvider = Provider(
   (ref) => DashboardRepository(ref.watch(dioProvider)),
 );
 final dashboardProvider = FutureProvider((ref) {
-  ref.watch(authProvider);
+  ref.watch(signedInUserProvider);
   ref.watch(dataRevisionProvider);
   return ref.watch(dashboardRepositoryProvider).overview();
 });

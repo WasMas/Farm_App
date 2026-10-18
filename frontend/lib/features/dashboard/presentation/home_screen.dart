@@ -26,11 +26,13 @@ class HomeScreen extends ConsumerWidget {
           PageHeading(
             'A good day to grow.',
             DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
-            action: IconButton(
-              tooltip: 'Refresh journal',
-              onPressed: () => ref.invalidate(dashboardProvider),
-              icon: const Icon(Icons.refresh),
-            ),
+            action: MediaQuery.sizeOf(context).width < 900
+                ? null
+                : IconButton(
+                    tooltip: 'Refresh journal',
+                    onPressed: () => ref.invalidate(dashboardProvider),
+                    icon: const Icon(Icons.refresh),
+                  ),
           ),
           ref
               .watch(dashboardProvider)
@@ -295,7 +297,8 @@ class _SummaryFigures extends StatelessWidget {
             (
               label: 'Land in care',
               value: summary.area.toStringAsFixed(2),
-              detail: 'ha · ${summary.farms} farms',
+              detail:
+                  'ha · ${summary.farms} ${summary.farms == 1 ? 'farm' : 'farms'}',
             ),
             (
               label: 'Growing now',

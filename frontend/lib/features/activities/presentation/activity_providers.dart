@@ -8,6 +8,6 @@ final activityRepositoryProvider = Provider(
   (ref) => ActivityRepository(ref.watch(dioProvider)),
 );
 final activitiesProvider = FutureProvider((ref) {
-  ref.watch(authProvider);
+  ref.watch(signedInUserProvider);
   return ref.watch(activityRepositoryProvider).list();
 });
