@@ -13,7 +13,7 @@ INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
     'corsheaders', 'rest_framework', 'rest_framework_simplejwt.token_blacklist',
-    'accounts.apps.AccountsConfig', 'core', 'farms',
+    'accounts.apps.AccountsConfig', 'core', 'farms', 'crops',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware', 'corsheaders.middleware.CorsMiddleware',
