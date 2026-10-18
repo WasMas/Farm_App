@@ -75,14 +75,19 @@ Dio createDio(
             await store.write('refresh', response.data['refresh'] as String);
           }
           request.headers['Authorization'] = 'Bearer $access';
+          if (request.path == 'auth/logout/') {
+            request.data = {'refresh': await store.read('refresh')};
+          }
           request.extra['retried'] = true;
           handler.resolve(await dio.fetch(request));
         } catch (refreshError) {
-          if (refreshError is! DioException ||
-              refreshError.response?.statusCode == 401) {
-            await store.clear();
-            onExpired?.call();
+          if (refreshError is DioException &&
+              refreshError.response?.statusCode != 401) {
+            handler.next(refreshError);
+            return;
           }
+          await store.clear();
+          onExpired?.call();
           handler.next(error);
         }
       },

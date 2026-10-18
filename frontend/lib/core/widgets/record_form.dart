@@ -171,7 +171,17 @@ class _RecordFormState extends State<_RecordForm> {
                                     decoration: InputDecoration(
                                       labelText: f.label,
                                       helperText: f.help,
-                                      suffixIcon: f.date
+                                      suffixIcon: f.date && !f.required
+                                          ? IconButton(
+                                              tooltip: 'Clear date',
+                                              onPressed: busy
+                                                  ? null
+                                                  : () =>
+                                                        controllers[f.keyName]!
+                                                            .clear(),
+                                              icon: const Icon(Icons.clear),
+                                            )
+                                          : f.date
                                           ? const Icon(
                                               Icons.calendar_today_outlined,
                                             )

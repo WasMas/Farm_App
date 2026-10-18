@@ -56,7 +56,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) => Scaffold(
     body: LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 900;
+        final wide =
+            constraints.maxWidth >= 900 && constraints.maxHeight >= 720;
         final panel = Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(32),
@@ -68,7 +69,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.grass, size: 40, color: FarmColors.olive),
+                    Icon(
+                      Icons.grass,
+                      size: 40,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     const SizedBox(height: 24),
                     Text(
                       'FIELDBOOK / THE FARM JOURNAL',

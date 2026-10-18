@@ -23,6 +23,7 @@ void main() {
     // A rejected access token must be refreshed transparently.
     await store.write('access', 'expired-token');
     expect((await dio.get('auth/me/')).data['id'], user.id);
+    await store.write('access', 'another-expired-token');
     await repo.logout();
     expect(await repo.restore(), isNull);
     expect((await repo.login(name, password)).id, user.id);
