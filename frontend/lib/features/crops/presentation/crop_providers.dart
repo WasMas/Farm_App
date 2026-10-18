@@ -8,10 +8,10 @@ final cropRepositoryProvider = Provider(
   (ref) => CropRepository(ref.watch(dioProvider)),
 );
 final cropTypesProvider = FutureProvider((ref) {
-  ref.watch(authProvider);
+  ref.watch(signedInUserProvider);
   return ref.watch(cropRepositoryProvider).types();
 });
 final cyclesProvider = FutureProvider((ref) {
-  ref.watch(authProvider);
+  ref.watch(signedInUserProvider);
   return ref.watch(cropRepositoryProvider).cycles();
 });

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme.dart';
 import '../../../core/widgets/page_parts.dart';
 import '../../auth/presentation/auth_provider.dart';
 import 'farm_forms.dart';
@@ -57,9 +56,11 @@ class FarmsScreen extends ConsumerWidget {
                                     children: [
                                       Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.landscape_outlined,
-                                            color: FarmColors.olive,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
                                             size: 32,
                                           ),
                                           const Spacer(),

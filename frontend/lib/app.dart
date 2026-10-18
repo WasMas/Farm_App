@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/api.dart';
 import 'core/theme.dart';
 import 'core/router.dart';
-
-final healthProvider = FutureProvider(
-  (ref) async =>
-      (await ref.watch(dioProvider).get('health/')).data
-          as Map<String, dynamic>,
-);
+import 'core/theme_mode.dart';
 
 class FieldbookApp extends ConsumerWidget {
   const FieldbookApp({super.key});
@@ -18,6 +12,8 @@ class FieldbookApp extends ConsumerWidget {
     title: 'Fieldbook',
     debugShowCheckedModeBanner: false,
     theme: farmTheme(),
+    darkTheme: farmTheme(true),
+    themeMode: ref.watch(themeModeProvider).asData?.value ?? ThemeMode.system,
     routerConfig: ref.watch(routerProvider),
   );
 }
