@@ -1,0 +1,47 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# Python / Django
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.sqlite3-*
+.pytest_cache/
+.coverage
+htmlcov/
+staticfiles/
+media/
+*.log
+# Flutter / Dart and native generated output
+.dart_tool/
+.flutter-plugins*
+.packages
+build/
+coverage/
+android/.gradle/
+android/local.properties
+android/key.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+macos/Pods/
+macos/Flutter/ephemeral/
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+# Editors / local verification artifacts
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+.local/
+test-results/
+*.pid
