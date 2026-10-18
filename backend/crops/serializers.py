@@ -53,6 +53,8 @@ class CropCycleSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'end_date': 'A completed cycle needs an end date.'})
         if end and (end < planting or end > today or status == 'active'):
             raise serializers.ValidationError({'end_date': 'Use a date between planting and today for a completed cycle.'})
+        if self.instance and (self.instance.activities.filter(date__lt=planting).exists() or (end and self.instance.activities.filter(date__gt=end).exists())):
+            raise serializers.ValidationError('Season dates must include all recorded activities.')
         field = Field.objects.select_for_update().get(pk=field.pk)
         area = attrs.get('area', getattr(self.instance, 'area', 0))
         used = field.cycles.filter(status='active').exclude(pk=getattr(self.instance, 'pk', None)).aggregate(total=Sum('area'))['total'] or 0
