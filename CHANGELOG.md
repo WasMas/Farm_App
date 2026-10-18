@@ -11,3 +11,4 @@
 - Completed the crop catalogue and planting lifecycle, with stage tracking, historical seasons, and protected relationships.
 - Added cultivation/observation/harvest history, validation, search, and immutable admin audit entries.
 - Added Open-Meteo weather, optional encrypted customer keys, unavailable-value placeholders, and a verified live provider fetch.
+- Added a dashboard based on saved farm records, with unit-aware totals and automatic refresh after changes.
