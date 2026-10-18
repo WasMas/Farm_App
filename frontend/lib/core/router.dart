@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/auth_provider.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/dashboard/presentation/home_screen.dart';
+import '../features/farms/presentation/farms_screen.dart';
+import '../features/farms/presentation/farm_detail_screen.dart';
+import 'widgets/farm_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -27,7 +30,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             const Scaffold(body: Center(child: CircularProgressIndicator())),
       ),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
-      GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
+      ShellRoute(
+        builder: (_, _, child) => FarmShell(child: child),
+        routes: [
+          GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
+          GoRoute(path: '/farms', builder: (_, _) => const FarmsScreen()),
+          GoRoute(
+            path: '/farms/:id',
+            builder: (_, state) =>
+                FarmDetailScreen(int.parse(state.pathParameters['id']!)),
+          ),
+        ],
+      ),
     ],
   );
   ref.listen(authProvider, (_, _) => router.refresh());
