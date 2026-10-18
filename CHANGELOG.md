@@ -8,3 +8,4 @@
 - Added registration, JWT authentication, role groups, secure session storage, and initial admin bootstrap.
 - Added an isolated PostgreSQL/Flutter integration runner; authentication checks passed.
 - Completed farms, fields, membership permissions, area validation, and Flutter CRUD screens with passing integration and responsive widget tests.
+- Completed the crop catalogue and planting lifecycle, with stage tracking, historical seasons, and protected relationships.

@@ -8,6 +8,8 @@ import '../features/dashboard/presentation/home_screen.dart';
 import '../features/farms/presentation/farms_screen.dart';
 import '../features/farms/presentation/farm_detail_screen.dart';
 import 'widgets/farm_shell.dart';
+import '../features/crops/presentation/crops_screen.dart';
+import '../features/crops/presentation/crop_types_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -34,6 +36,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _, child) => FarmShell(child: child),
         routes: [
           GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
+          GoRoute(path: '/crops', builder: (_, _) => const CropsScreen()),
+          GoRoute(
+            path: '/crops/types',
+            builder: (_, _) => const CropTypesScreen(),
+          ),
           GoRoute(path: '/farms', builder: (_, _) => const FarmsScreen()),
           GoRoute(
             path: '/farms/:id',
