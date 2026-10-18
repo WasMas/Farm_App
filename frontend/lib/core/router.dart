@@ -11,6 +11,7 @@ import 'widgets/farm_shell.dart';
 import '../features/crops/presentation/crops_screen.dart';
 import '../features/crops/presentation/crop_types_screen.dart';
 import '../features/activities/presentation/activities_screen.dart';
+import '../features/weather/presentation/weather_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -38,6 +39,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
           GoRoute(path: '/crops', builder: (_, _) => const CropsScreen()),
+          GoRoute(path: '/weather', builder: (_, _) => const WeatherScreen()),
           GoRoute(
             path: '/activities',
             builder: (_, _) => const ActivitiesScreen(),
