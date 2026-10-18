@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from farms.views import FarmViewSet, FieldViewSet
 from crops.views import CropTypeViewSet, CropCycleViewSet
 from activities.views import ActivityViewSet
+from weather.views import WeatherView, WeatherConfigurationView
 from core.views import HealthView
 from accounts.views import RegisterView, LoginView, LogoutView, MeView
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -21,3 +22,4 @@ router.register('crop-types', CropTypeViewSet, basename='crop-type')
 router.register('crop-cycles', CropCycleViewSet, basename='crop-cycle')
 router.register('activities', ActivityViewSet, basename='activity')
 urlpatterns += [path('api/', include(router.urls))]
+urlpatterns += [path('api/weather/', WeatherView.as_view()), path('api/weather/config/', WeatherConfigurationView.as_view())]
