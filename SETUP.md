@@ -87,8 +87,8 @@ Farm_App/
   README.md
 ```
 
-There is currently no configured GitHub remote. If the project is published
-later, clone its actual repository URL instead of copying the source.
+If you receive a GitHub repository link, use that repository's clone URL or
+download its source ZIP, then place the project in the folder above.
 
 Each computer needs its own configuration and dependencies. Leave the original
 computer's `.env`, `.venv`, build folders and caches out of the source copy.
