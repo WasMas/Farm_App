@@ -23,6 +23,9 @@ results and platform limitations; [CHANGELOG.md](CHANGELOG.md) for milestones.
 
 ## Start the backend
 
+Starting on a computer with no development tools installed? Follow
+[SETUP.md](SETUP.md) for the complete Windows installation and first-run guide.
+
 PostgreSQL must be running. The local `backend/.env` is already configured in
 this workspace with the database details supplied for the project. It is ignored
 by Git. For a fresh checkout, initialize it as follows:
