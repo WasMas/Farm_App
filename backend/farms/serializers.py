@@ -64,6 +64,10 @@ class FieldSerializer(serializers.ModelSerializer):
         farm = Farm.objects.select_for_update().get(pk=farm.pk)
         used = farm.fields.exclude(pk=getattr(self.instance, 'pk', None)).aggregate(total=Sum('area'))['total'] or 0
         area = attrs.get('area', getattr(self.instance, 'area', 0))
+        if self.instance:
+            planted = self.instance.cycles.filter(status='active').aggregate(total=Sum('area'))['total'] or 0
+            if area < planted:
+                raise serializers.ValidationError({'area': 'Field area cannot be smaller than its active plantings.'})
         if used + area > farm.total_area:
             raise serializers.ValidationError({'area': 'Combined field area exceeds the farm area.'})
         return attrs

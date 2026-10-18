@@ -8,6 +8,7 @@ import '../theme.dart';
 const destinations = [
   (path: '/', title: 'The journal', icon: Icons.menu_book_outlined),
   (path: '/farms', title: 'Farms & fields', icon: Icons.landscape_outlined),
+  (path: '/crops', title: 'Plantings', icon: Icons.spa_outlined),
 ];
 
 class FarmShell extends ConsumerWidget {
