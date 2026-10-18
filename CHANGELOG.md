@@ -10,3 +10,4 @@
 - Completed farms, fields, membership permissions, area validation, and Flutter CRUD screens with passing integration and responsive widget tests.
 - Completed the crop catalogue and planting lifecycle, with stage tracking, historical seasons, and protected relationships.
 - Added cultivation/observation/harvest history, validation, search, and immutable admin audit entries.
+- Added Open-Meteo weather, optional encrypted customer keys, unavailable-value placeholders, and a verified live provider fetch.
