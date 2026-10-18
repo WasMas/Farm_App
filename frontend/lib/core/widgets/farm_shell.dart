@@ -9,6 +9,7 @@ const destinations = [
   (path: '/', title: 'The journal', icon: Icons.menu_book_outlined),
   (path: '/farms', title: 'Farms & fields', icon: Icons.landscape_outlined),
   (path: '/crops', title: 'Plantings', icon: Icons.spa_outlined),
+  (path: '/activities', title: 'Day’s work', icon: Icons.edit_note_outlined),
 ];
 
 class FarmShell extends ConsumerWidget {
