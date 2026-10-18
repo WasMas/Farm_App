@@ -2,17 +2,35 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'session_store.dart';
+import 'data_revision.dart';
 
 const apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
   defaultValue: 'http://localhost:8000/api/',
 );
-final dioProvider = Provider<Dio>(
-  (ref) => createDio(
+final dioProvider = Provider<Dio>((ref) {
+  final dio = createDio(
     ref.watch(tokenStoreProvider),
     onExpired: () => ref.read(sessionExpiredProvider).add(null),
-  ),
-);
+  );
+  dio.interceptors.add(
+    InterceptorsWrapper(
+      onResponse: (response, handler) {
+        if (![
+              'GET',
+              'HEAD',
+              'OPTIONS',
+            ].contains(response.requestOptions.method) &&
+            !response.requestOptions.path.startsWith('auth/')) {
+          ref.read(dataRevisionProvider.notifier).changed();
+        }
+        handler.next(response);
+      },
+    ),
+  );
+  ref.onDispose(() => dio.close(force: true));
+  return dio;
+});
 
 Dio createDio(
   TokenStore store, {
