@@ -5,6 +5,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from accounts.models import User
 from core.viewsets import SafeModelViewSet
+from core.models import record_event
 from .access import visible_farms, can_manage, require_work
 from .models import FarmMembership, Field
 from .serializers import FarmSerializer, FieldSerializer, MembershipSerializer
@@ -24,12 +25,13 @@ class FarmViewSet(SafeModelViewSet):
     def perform_create(self, serializer):
         if self.request.user.role == 'expert' and not self.request.user.is_staff:
             raise PermissionDenied('Expert accounts have read-only farm access in this MVP.')
-        serializer.save(owner=self.request.user)
+        instance = serializer.save(owner=self.request.user)
+        record_event(self.request.user, instance, 'create')
 
     def perform_update(self, serializer):
         if not can_manage(self.request.user, serializer.instance):
             raise PermissionDenied('Only the owner or a manager may edit this farm.')
-        serializer.save()
+        super().perform_update(serializer)
 
     @transaction.atomic
     def update(self, *args, **kwargs):
@@ -53,6 +55,7 @@ class FarmViewSet(SafeModelViewSet):
         serializer = MembershipSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         membership, _ = FarmMembership.objects.update_or_create(farm=farm, user=user, defaults=serializer.validated_data)
+        record_event(request.user, membership, 'share')
         return Response(MembershipSerializer(membership).data, status=201)
 
     @action(detail=True, methods=['delete'], url_path=r'members/(?P<user_id>[^/.]+)')
@@ -60,7 +63,9 @@ class FarmViewSet(SafeModelViewSet):
         farm = self.get_object()
         if not (request.user.is_staff or farm.owner_id == request.user.pk):
             raise PermissionDenied('Only the owner may manage farm access.')
-        get_object_or_404(FarmMembership, farm=farm, user_id=user_id).delete()
+        membership = get_object_or_404(FarmMembership, farm=farm, user_id=user_id)
+        record_event(request.user, membership, 'unshare')
+        membership.delete()
         return Response(status=204)
 
 
