@@ -1,5 +1,7 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from farms.views import FarmViewSet, FieldViewSet
 from core.views import HealthView
 from accounts.views import RegisterView, LoginView, LogoutView, MeView
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -10,3 +12,7 @@ urlpatterns += [path('api/auth/register/', RegisterView.as_view()), path('api/au
                 path('api/auth/me/', MeView.as_view())]
 admin.site.site_header = 'Fieldbook administration'
 admin.site.site_title = 'Fieldbook'
+router = DefaultRouter()
+router.register('farms', FarmViewSet, basename='farm')
+router.register('fields', FieldViewSet, basename='field')
+urlpatterns += [path('api/', include(router.urls))]
