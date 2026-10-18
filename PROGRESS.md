@@ -9,5 +9,5 @@ Only checks actually executed are recorded as passed.
 | Farms and fields | CRUD; decimal hectares; coordinates; owner/manager/worker/viewer access; sharing; protected history deletion | 8 Django tests; live Flutter CRUD/permissions/validation against PostgreSQL; farm/form rendering at 390 and 1440 px; clean analysis | Passed (browser unavailable) |
 | Crop types and cycles | Seeded/admin-managed catalogue; per-field planting cycles; stages; completed seasons; area allocation; history protection | Django lifecycle/validation tests; live Flutter repository lifecycle on PostgreSQL; screen/filter tests at 390 and 1440 px; clean analysis | Passed |
 | Activities and harvests | All five work types; units; author; season dates; search/history; CRUD; admin audit log | 7 affected Django tests; live Flutter/PostgreSQL test for all work types; 390/1440 px history/search tests; clean analysis | Passed |
-| Weather | Pending | Pending | Pending |
+| Weather | Personal connection settings; public/customer Open-Meteo; encrypted keys; coordinates; 10-minute snapshots; refresh; null placeholders | 3 Django tests; Flutter/PostgreSQL settings test; real Open-Meteo result `ok`; placeholder/zero-value rendering; overflow regression fixed; clean analysis | Passed |
 | Dashboard / responsive UI | Pending | Pending | Pending |
