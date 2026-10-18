@@ -1,6 +1,7 @@
 """Create ignored local credentials and the PostgreSQL database, without overwriting either."""
 import secrets
 import getpass
+import json
 from pathlib import Path
 
 import psycopg
@@ -10,11 +11,12 @@ from dotenv import dotenv_values
 root = Path(__file__).resolve().parent.parent
 env_path = root / 'backend' / '.env'
 if not env_path.exists():
-    values = (root / 'backend' / '.env.example').read_text()
+    values = (root / 'backend' / '.env.example').read_text(encoding='utf-8')
     values = values.replace('DJANGO_SECRET_KEY=\n', f'DJANGO_SECRET_KEY={secrets.token_urlsafe(64)}\n')
-    values = values.replace('DB_PASSWORD=\n', f'DB_PASSWORD={getpass.getpass("PostgreSQL password: ")}\n')
+    password = json.dumps(getpass.getpass('PostgreSQL password: '), ensure_ascii=False)
+    values = values.replace('DB_PASSWORD=\n', f'DB_PASSWORD={password}\n')
     values = values.replace('INITIAL_ADMIN_PASSWORD=\n', f'INITIAL_ADMIN_PASSWORD={secrets.token_urlsafe(18)}\n')
-    env_path.write_text(values)
+    env_path.write_text(values, encoding='utf-8')
 env = dotenv_values(env_path)
 with psycopg.connect(dbname='postgres', user=env['DB_USER'], password=env['DB_PASSWORD'],
                      host=env['DB_HOST'], port=env['DB_PORT'], autocommit=True) as conn:

@@ -26,5 +26,15 @@ class CropTests(TestCase):
         self.assertEqual(self.client.post('/api/crop-cycles/', self.payload).status_code, 201)
 
     def test_crop_reference_is_admin_only_and_invalid_dates(self):
+        self.assertEqual(self.client.get('/api/crop-cycles/?field=invalid').status_code, 400)
         self.assertEqual(self.client.post('/api/crop-types/', {'name': 'Unauthorized'}).status_code, 403)
         self.assertEqual(self.client.post('/api/crop-cycles/', {**self.payload, 'planting_date': str(date.today() + timedelta(days=1))}).status_code, 400)
+
+    def test_admin_can_manage_reference_data(self):
+        admin = User.objects.create_user('catalogadmin', 'admin@catalogue.test', 'fixture-pass', role='admin')
+        self.client.force_authenticate(admin)
+        response = self.client.post('/api/crop-types/', {'name': 'Apricot', 'description': 'Reference crop'})
+        self.assertEqual(response.status_code, 201)
+        url = f'/api/crop-types/{response.data["id"]}/'
+        self.assertEqual(self.client.patch(url, {'description': 'Updated'}).status_code, 200)
+        self.assertEqual(self.client.delete(url).status_code, 204)

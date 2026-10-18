@@ -13,6 +13,7 @@ class FarmTests(TestCase):
         self.client.force_authenticate(self.owner)
 
     def test_isolation_and_relation_validation(self):
+        self.assertEqual(self.client.get('/api/fields/?farm=invalid').status_code, 400)
         self.client.force_authenticate(self.other)
         self.assertEqual(self.client.get('/api/farms/').data['count'], 0)
         self.assertEqual(self.client.get(f'/api/farms/{self.farm.pk}/').status_code, 404)
@@ -33,3 +34,16 @@ class FarmTests(TestCase):
         FarmMembership.objects.filter(user=self.other).update(role='worker')
         self.assertEqual(self.client.post('/api/fields/', {'farm': self.farm.pk, 'name': 'B', 'area': 1, 'soil_type': 'clay'}).status_code, 201)
         self.assertEqual(self.client.post(f'/api/farms/{self.farm.pk}/members/', {'username': 'owner', 'role': 'manager'}).status_code, 403)
+
+    def test_expert_cannot_write_even_with_worker_membership(self):
+        expert = User.objects.create_user('expert', 'expert@test.com', 'fixture-pass', role='expert')
+        FarmMembership.objects.create(farm=self.farm, user=expert, role='worker')
+        self.client.force_authenticate(expert)
+        self.assertEqual(self.client.get('/api/farms/').data['count'], 1)
+        self.assertEqual(self.client.post('/api/farms/', {'name': 'Denied', 'location': 'Tunis', 'total_area': 3}).status_code, 403)
+        self.assertEqual(self.client.post('/api/fields/', {'farm': self.farm.pk, 'name': 'Denied', 'area': 1, 'soil_type': 'clay'}).status_code, 400)
+        self.farm.owner = expert
+        self.farm.save()
+        self.assertFalse(self.client.get(f'/api/farms/{self.farm.pk}/').data['can_share'])
+        self.assertEqual(self.client.delete(f'/api/farms/{self.farm.pk}/').status_code, 403)
+        self.assertEqual(self.client.post(f'/api/farms/{self.farm.pk}/members/', {'username': 'other', 'role': 'manager'}).status_code, 403)
