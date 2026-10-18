@@ -10,10 +10,7 @@ class ActivityRepository {
       (await fetchCollection(
         dio,
         'activities/',
-        query: {
-          'kind': ?kind,
-          'cycle': ?cycle,
-        },
+        query: {'kind': ?kind, 'cycle': ?cycle},
       )).map(ActivityRecord.fromJson).toList();
   Future<ActivityRecord> save(Map<String, dynamic> data, [int? id]) async =>
       ActivityRecord.fromJson(
