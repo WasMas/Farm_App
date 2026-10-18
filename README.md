@@ -23,12 +23,15 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
 .\.venv\Scripts\python.exe scripts/init_local.py
 .\.venv\Scripts\python.exe backend/manage.py migrate
-.\.venv\Scripts\python.exe backend/manage.py runserver 127.0.0.1:8000
+.\.venv\Scripts\python.exe scripts/run_backend.py 127.0.0.1:8000
 ```
 
 `init_local.py` creates an ignored `.env` with random application/admin secrets
-and the local database connection specified for this project. It never overwrites
+and asks for the local PostgreSQL password. It never overwrites
 an existing `.env` or database. PostgreSQL must already be running.
+The startup script migrates the database, runs `ensure_admin`, then starts Django.
+The initial username and generated password are in your ignored `backend/.env`.
+The command leaves existing active administrators and passwords unchanged.
 
 In another terminal:
 
@@ -52,5 +55,10 @@ flutter test
 # Requires the local backend running:
 flutter test --dart-define=RUN_LIVE_API_TESTS=true test/live_api_test.dart
 ```
+
+To test authentication through the real Flutter repository against an isolated
+PostgreSQL database (created and removed automatically):
+` .venv/Scripts/python.exe scripts/verify_live.py ` from the repository root.
+Set `FLUTTER_ROOT` if the SDK is installed somewhere else.
 
 See [PROGRESS.md](PROGRESS.md) for checks actually executed and pending work.
