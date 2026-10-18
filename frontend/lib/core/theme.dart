@@ -15,23 +15,25 @@ ThemeData farmTheme([bool dark = false]) {
     secondary: FarmColors.soil,
     surface: dark ? const Color(0xFF20251E) : FarmColors.paper,
   );
-  final base = ThemeData(useMaterial3: true, colorScheme: scheme);
+  final base = ThemeData(
+    useMaterial3: true,
+    colorScheme: scheme,
+    fontFamily: 'DMSans',
+  );
   return base.copyWith(
     scaffoldBackgroundColor: scheme.surface,
     textTheme: base.textTheme.copyWith(
       displaySmall: base.textTheme.displaySmall?.copyWith(
-        fontFamily: 'Georgia',
+        fontFamily: 'Lora',
         fontWeight: FontWeight.w400,
         letterSpacing: -1.2,
       ),
       headlineMedium: base.textTheme.headlineMedium?.copyWith(
-        fontFamily: 'Georgia',
+        fontFamily: 'Lora',
         fontWeight: FontWeight.w400,
         letterSpacing: -.6,
       ),
-      headlineSmall: base.textTheme.headlineSmall?.copyWith(
-        fontFamily: 'Georgia',
-      ),
+      headlineSmall: base.textTheme.headlineSmall?.copyWith(fontFamily: 'Lora'),
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: scheme.surface,

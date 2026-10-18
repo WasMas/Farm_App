@@ -32,6 +32,14 @@ class AuthenticationTests(TestCase):
         self.assertEqual(self.client.get('/api/auth/me/').status_code, 401)
         self.assertEqual(self.client.post('/api/auth/register/', {**self.payload, 'password': '123'}).status_code, 400)
 
+    def test_role_and_admin_flags_stay_consistent(self):
+        user = User.objects.create_user('roles', 'roles@test.com', 'fixture-pass', role='admin')
+        self.assertTrue(user.is_staff)
+        user.role = 'farmer'
+        user.save()
+        self.assertFalse(user.is_staff)
+        self.assertFalse(user.groups.filter(name='Administrator').exists())
+
     @patch.dict(os.environ, {'INITIAL_ADMIN_USERNAME': 'rootfarm', 'INITIAL_ADMIN_EMAIL': 'root@example.com',
                              'INITIAL_ADMIN_PASSWORD': 'A-bootstrap-passphrase-802!'})
     def test_bootstrap_is_idempotent_and_does_not_reset_password(self):

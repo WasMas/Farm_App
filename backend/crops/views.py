@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 from core.viewsets import SafeModelViewSet
+from core.query import positive_id
 from farms.access import visible_farms, require_work
 from .models import CropType, CropCycle
 from .serializers import CropTypeSerializer, CropCycleSerializer
@@ -26,7 +27,10 @@ class CropCycleViewSet(SafeModelViewSet):
         qs = CropCycle.objects.filter(field__farm__in=visible_farms(self.request.user)).select_related('field__farm', 'crop_type')
         for key in ['field', 'status']:
             if self.request.query_params.get(key):
-                qs = qs.filter(**{key: self.request.query_params[key]})
+                value = self.request.query_params[key]
+                if key == 'field':
+                    value = positive_id(value, key)
+                qs = qs.filter(**{key: value})
         return qs
 
     @transaction.atomic

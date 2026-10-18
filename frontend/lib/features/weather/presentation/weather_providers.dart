@@ -9,7 +9,7 @@ final weatherRepositoryProvider = Provider(
   (ref) => WeatherRepository(ref.watch(dioProvider)),
 );
 final weatherConfigProvider = FutureProvider((ref) {
-  ref.watch(authProvider);
+  ref.watch(signedInUserProvider);
   return ref.watch(weatherRepositoryProvider).config();
 });
 final weatherProvider =
@@ -17,7 +17,7 @@ final weatherProvider =
       ref,
       query,
     ) async {
-      ref.watch(authProvider);
+      ref.watch(signedInUserProvider);
       await ref.watch(weatherConfigProvider.future);
       return ref
           .watch(weatherRepositoryProvider)

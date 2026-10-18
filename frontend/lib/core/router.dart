@@ -51,8 +51,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/farms', builder: (_, _) => const FarmsScreen()),
           GoRoute(
             path: '/farms/:id',
-            builder: (_, state) =>
-                FarmDetailScreen(int.parse(state.pathParameters['id']!)),
+            builder: (_, state) => FarmDetailScreen(
+              int.tryParse(state.pathParameters['id']!) ?? -1,
+            ),
           ),
         ],
       ),

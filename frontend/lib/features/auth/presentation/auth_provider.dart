@@ -12,6 +12,13 @@ final authRepositoryProvider = Provider(
 final authProvider = AsyncNotifierProvider<AuthController, AppUser?>(
   AuthController.new,
 );
+final signedInUserProvider = Provider<AppUser>((ref) {
+  final user = ref.watch(authProvider).asData?.value;
+  if (user == null) {
+    throw StateError('Sign in to open your farm journal.');
+  }
+  return user;
+});
 
 class AuthController extends AsyncNotifier<AppUser?> {
   @override

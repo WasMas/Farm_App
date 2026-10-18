@@ -37,7 +37,7 @@ with psycopg.connect(dbname='postgres', user=config['DB_USER'], password=config[
                 time.sleep(.1)
         else:
             raise RuntimeError('Integration server did not become ready')
-        tests = sys.argv[1:] or ['test/live_api_test.dart', 'test/live_auth_test.dart']
+        tests = sys.argv[1:] or [str(path.relative_to(root / 'frontend')) for path in sorted((root / 'frontend/test').glob('live_*_test.dart'))]
         subprocess.run([str(dart), str(tool), 'test', '--no-pub', '--dart-define=RUN_LIVE_API_TESTS=true',
                         f'--dart-define=API_BASE_URL=http://127.0.0.1:{port}/api/', *tests], cwd=root / 'frontend', check=True)
     finally:

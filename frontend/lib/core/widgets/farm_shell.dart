@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/auth_provider.dart';
 import '../theme.dart';
+import '../theme_mode.dart';
 
 const destinations = [
   (path: '/', title: 'The journal', icon: Icons.menu_book_outlined),
@@ -27,7 +28,15 @@ class FarmShell extends ConsumerWidget {
       try {
         await ref.read(authProvider.notifier).logout();
       } catch (_) {
-        /* Local session has still been cleared. */
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Signed out on this device. The server could not be reached.',
+              ),
+            ),
+          );
+        }
       }
     }
 
@@ -40,9 +49,10 @@ class FarmShell extends ConsumerWidget {
               : AppBar(
                   title: const Text(
                     'Fieldbook',
-                    style: TextStyle(fontFamily: 'Georgia'),
+                    style: TextStyle(fontFamily: 'Lora'),
                   ),
                   actions: [
+                    const ThemeMenu(),
                     IconButton(
                       tooltip: 'Sign out',
                       onPressed: logout,
@@ -54,6 +64,8 @@ class FarmShell extends ConsumerWidget {
               ? null
               : NavigationBar(
                   selectedIndex: index < 0 ? 0 : index,
+                  labelBehavior:
+                      NavigationDestinationLabelBehavior.onlyShowSelected,
                   onDestinationSelected: (i) =>
                       context.go(destinations[i].path),
                   destinations: [
@@ -64,114 +76,113 @@ class FarmShell extends ConsumerWidget {
           body: Row(
             children: [
               if (desktop)
-                Container(
+                SizedBox(
                   width: 232,
-                  color: FarmColors.olive,
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            Icons.grass,
-                            color: FarmColors.wheat,
-                            size: 36,
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Fieldbook',
-                            style: TextStyle(
-                              fontFamily: 'Georgia',
-                              color: FarmColors.paper,
-                              fontSize: 30,
+                  child: ColoredBox(
+                    color: FarmColors.olive,
+                    child: SafeArea(
+                      child: LayoutBuilder(
+                        builder: (context, bounds) => SingleChildScrollView(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: bounds.maxHeight,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'THE WORKING FARM JOURNAL',
-                            style: TextStyle(
-                              color: Color(0xFFCBD0BC),
-                              fontSize: 9,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 48),
-                          for (var i = 0; i < destinations.length; i++)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Material(
-                                color: i == index
-                                    ? FarmColors.wheat
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(6),
-                                child: InkWell(
-                                  onTap: () => context.go(destinations[i].path),
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 15,
-                                      horizontal: 12,
+                            child: IntrinsicHeight(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  24,
+                                  32,
+                                  24,
+                                  24,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(
+                                      Icons.grass,
+                                      color: FarmColors.wheat,
+                                      size: 36,
                                     ),
-                                    child: Row(
+                                    const SizedBox(height: 12),
+                                    const Text(
+                                      'Fieldbook',
+                                      style: TextStyle(
+                                        fontFamily: 'Lora',
+                                        color: FarmColors.paper,
+                                        fontSize: 29,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'THE WORKING FARM JOURNAL',
+                                      style: TextStyle(
+                                        color: Color(0xFFCBD0BC),
+                                        fontSize: 9,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 32),
+                                    for (
+                                      var i = 0;
+                                      i < destinations.length;
+                                      i++
+                                    )
+                                      _NavItem(i, selected: i == index),
+                                    const SizedBox(height: 32),
+                                    const Spacer(),
+                                    const Text(
+                                      'GROW. NOTE. REPEAT.',
+                                      style: TextStyle(
+                                        color: Color(0xFFCBD0BC),
+                                        fontSize: 9,
+                                        letterSpacing: 2,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    const Divider(color: Color(0xFF788262)),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      user?.name.isNotEmpty == true
+                                          ? user!.name
+                                          : user?.username ?? '',
+                                      style: const TextStyle(
+                                        color: FarmColors.paper,
+                                      ),
+                                    ),
+                                    Text(
+                                      user?.role ?? '',
+                                      style: const TextStyle(
+                                        color: Color(0xFFCBD0BC),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
                                       children: [
-                                        Icon(
-                                          destinations[i].icon,
-                                          size: 20,
-                                          color: i == index
-                                              ? FarmColors.olive
-                                              : FarmColors.paper,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          destinations[i].title,
-                                          style: TextStyle(
-                                            color: i == index
-                                                ? FarmColors.olive
-                                                : FarmColors.paper,
+                                        Expanded(
+                                          child: TextButton.icon(
+                                            onPressed: logout,
+                                            icon: const Icon(
+                                              Icons.logout,
+                                              size: 16,
+                                            ),
+                                            label: const Text('Sign out'),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: FarmColors.wheat,
+                                            ),
                                           ),
+                                        ),
+                                        const ThemeMenu(
+                                          color: FarmColors.wheat,
                                         ),
                                       ],
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ),
                             ),
-                          const Spacer(),
-                          const Text(
-                            'GROW. NOTE. REPEAT.',
-                            style: TextStyle(
-                              color: Color(0xFFCBD0BC),
-                              fontSize: 9,
-                              letterSpacing: 2,
-                            ),
                           ),
-                          const SizedBox(height: 24),
-                          const Divider(color: Color(0xFF788262)),
-                          const SizedBox(height: 16),
-                          Text(
-                            user?.name.isNotEmpty == true
-                                ? user!.name
-                                : user?.username ?? '',
-                            style: const TextStyle(color: FarmColors.paper),
-                          ),
-                          Text(
-                            user?.role ?? '',
-                            style: const TextStyle(
-                              color: Color(0xFFCBD0BC),
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextButton.icon(
-                            onPressed: logout,
-                            icon: const Icon(Icons.logout, size: 16),
-                            label: const Text('Sign out'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: FarmColors.wheat,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -183,4 +194,43 @@ class FarmShell extends ConsumerWidget {
       },
     );
   }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem(this.index, {required this.selected});
+  final int index;
+  final bool selected;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Material(
+      color: selected ? FarmColors.wheat : Colors.transparent,
+      borderRadius: BorderRadius.circular(6),
+      child: InkWell(
+        onTap: () => context.go(destinations[index].path),
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
+          child: Row(
+            children: [
+              Icon(
+                destinations[index].icon,
+                size: 20,
+                color: selected ? FarmColors.olive : FarmColors.paper,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  destinations[index].title,
+                  style: TextStyle(
+                    color: selected ? FarmColors.olive : FarmColors.paper,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }

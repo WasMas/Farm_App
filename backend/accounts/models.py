@@ -10,3 +10,11 @@ class User(AbstractUser):
 
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=12, choices=Role, default=Role.FARMER)
+
+    def save(self, *args, **kwargs):
+        if self.is_superuser:
+            self.role = self.Role.ADMIN
+        self.is_staff = self.role == self.Role.ADMIN
+        if kwargs.get('update_fields') is not None:
+            kwargs['update_fields'] = set(kwargs['update_fields']) | {'role', 'is_staff'}
+        super().save(*args, **kwargs)
