@@ -1,5 +1,6 @@
 """Create ignored local credentials and the PostgreSQL database, without overwriting either."""
 import secrets
+import getpass
 from pathlib import Path
 
 import psycopg
@@ -11,6 +12,7 @@ env_path = root / 'backend' / '.env'
 if not env_path.exists():
     values = (root / 'backend' / '.env.example').read_text()
     values = values.replace('DJANGO_SECRET_KEY=\n', f'DJANGO_SECRET_KEY={secrets.token_urlsafe(64)}\n')
+    values = values.replace('DB_PASSWORD=\n', f'DB_PASSWORD={getpass.getpass("PostgreSQL password: ")}\n')
     values = values.replace('INITIAL_ADMIN_PASSWORD=\n', f'INITIAL_ADMIN_PASSWORD={secrets.token_urlsafe(18)}\n')
     env_path.write_text(values)
 env = dotenv_values(env_path)
