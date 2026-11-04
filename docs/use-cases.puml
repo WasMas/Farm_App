@@ -1,0 +1,53 @@
+@startuml Fieldbook_MVP_Use_Cases
+left to right direction
+actor Visitor
+actor "Account holder" as Holder
+actor Farmer
+actor Administrator as Admin
+actor "Agricultural expert (read only)" as Expert
+actor "Open-Meteo API" as WeatherAPI
+Farmer --|> Holder
+Admin --|> Holder
+Expert --|> Holder
+rectangle "Fieldbook — first-month MVP" {
+  usecase "Register / sign in" as Login
+  usecase "Sign out" as Logout
+  usecase "View permitted farms and fields" as ReadFarm
+  usecase "View planting seasons" as ReadCrops
+  usecase "View and search activity history" as History
+  usecase "View dashboard" as Dashboard
+  usecase "View farm weather" as Weather
+  usecase "Configure personal weather connection" as WeatherConfig
+  usecase "Fetch weather conditions" as Fetch
+  usecase "Manage farms and fields" as ManageFarm
+  usecase "Manage farm access (owner)" as Share
+  usecase "Manage planting cycles and stages" as ManageCrops
+  usecase "Record and edit fieldwork / observations / harvest" as Work
+  usecase "Manage accounts, roles and crop reference data" as Administration
+  usecase "Inspect audit records" as Audit
+}
+Visitor -- Login
+Holder -- Logout
+Holder -- ReadFarm
+Holder -- ReadCrops
+Holder -- History
+Holder -- Dashboard
+Holder -- Weather
+Holder -- WeatherConfig
+Farmer -- ManageFarm
+Farmer -- Share
+Farmer -- ManageCrops
+Farmer -- Work
+Admin -- ManageFarm
+Admin -- Share
+Admin -- ManageCrops
+Admin -- Work
+Admin -- Administration
+Admin -- Audit
+Fetch ..> Weather : <<extend>>\n[connected and refresh needed]
+WeatherAPI -- Fetch
+note bottom of ManageFarm
+  Changes require the appropriate farm membership.
+  An expert does not inherit farmer write operations.
+end note
+@enduml
