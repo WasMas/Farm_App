@@ -1,0 +1,12 @@
+{
+  "name": "Fieldbook",
+  "short_name": "Fieldbook",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f7f4eb",
+  "theme_color": "#414d32",
+  "description": "A working journal for fields, seasons, and everyday farm work.",
+  "orientation": "any",
+  "prefer_related_applications": false,
+  "icons": [{"src": "fieldbook.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}]
+}

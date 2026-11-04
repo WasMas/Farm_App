@@ -1,0 +1,81 @@
+@startuml Fieldbook_MVP
+skinparam classAttributeIconSize 0
+class User {
+  id: BigInt
+  username: String
+  email: String
+  role: Admin | Farmer | Expert
+}
+class Farm {
+  name: String
+  location: String
+  total_area: Decimal (ha)
+  latitude: Decimal?
+  longitude: Decimal?
+}
+class FarmMembership {
+  role: Manager | Worker | Viewer
+}
+class Field {
+  name: String
+  area: Decimal (ha)
+  soil_type: SoilType
+}
+class CropType {
+  name: String
+  description: Text
+}
+class CropCycle {
+  variety: String
+  planting_date: Date
+  end_date: Date?
+  area: Decimal (ha)
+  current_stage: GrowthStage
+  status: Active | Completed
+}
+class Activity {
+  kind: Irrigation | Fertilization | Treatment | Observation | Harvest
+  date: Date
+  quantity: Decimal?
+  unit: String
+  product: String
+  notes: Text
+}
+class WeatherConfiguration {
+  enabled: Boolean
+  mode: Public | Customer
+  encrypted_key: Text
+}
+class WeatherSnapshot {
+  payload: JSON
+  latitude: Decimal
+  longitude: Decimal
+  retrieved_at: DateTime
+}
+class AuditEvent {
+  action: String
+  entity: String
+  object_id: BigInt
+  recorded_at: DateTime
+}
+User "1" -- "0..*" Farm : owns
+User "1" -- "0..*" FarmMembership
+Farm "1" -- "0..*" FarmMembership
+Farm "1" -- "0..*" Field
+Field "1" -- "0..*" CropCycle
+CropType "1" -- "0..*" CropCycle
+CropCycle "1" -- "0..*" Activity
+User "1" -- "0..*" Activity : recorded by
+User "1" -- "0..1" WeatherConfiguration
+User "1" -- "0..*" WeatherSnapshot
+Farm "1" -- "0..*" WeatherSnapshot
+User "0..1" -- "0..*" AuditEvent : actor
+note bottom of CropCycle
+  Actual planting seasons, distinct from crop reference types.
+  Active areas must fit within the field.
+end note
+note bottom of Activity
+  Actual irrigation and harvest events.
+  Recommendations and predictions are deferred.
+end note
+@enduml
