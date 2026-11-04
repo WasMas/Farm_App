@@ -12,6 +12,7 @@ import '../features/crops/presentation/crops_screen.dart';
 import '../features/crops/presentation/crop_types_screen.dart';
 import '../features/activities/presentation/activities_screen.dart';
 import '../features/weather/presentation/weather_screen.dart';
+import '../features/auth/presentation/profile_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -54,6 +55,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => FarmDetailScreen(
               int.tryParse(state.pathParameters['id']!) ?? -1,
             ),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfileScreen(),
           ),
         ],
       ),
