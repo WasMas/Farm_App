@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api.dart';
 import '../../../core/session_store.dart';
@@ -9,14 +10,18 @@ final authRepositoryProvider = Provider(
   (ref) =>
       AuthRepository(ref.watch(dioProvider), ref.watch(tokenStoreProvider)),
 );
+
 final authProvider = AsyncNotifierProvider<AuthController, AppUser?>(
   AuthController.new,
 );
+
 final signedInUserProvider = Provider<AppUser>((ref) {
   final user = ref.watch(authProvider).asData?.value;
+
   if (user == null) {
     throw StateError('Sign in to open your farm journal.');
   }
+
   return user;
 });
 
@@ -27,7 +32,9 @@ class AuthController extends AsyncNotifier<AppUser?> {
         .watch(sessionExpiredProvider)
         .stream
         .listen((_) => state = const AsyncData(null));
+
     ref.onDispose(subscription.cancel);
+
     return ref.watch(authRepositoryProvider).restore();
   }
 
@@ -48,6 +55,26 @@ class AuthController extends AsyncNotifier<AppUser?> {
           .read(authRepositoryProvider)
           .register(username, name, email, password),
     );
+  }
+
+  Future<void> updateProfile({
+    required String name,
+    required String bio,
+    required String profileImageUrl,
+    XFile? image,
+    bool clearUploadedImage = false,
+  }) async {
+    final updatedUser = await ref
+        .read(authRepositoryProvider)
+        .updateProfile(
+          name: name,
+          bio: bio,
+          profileImageUrl: profileImageUrl,
+          image: image,
+          clearUploadedImage: clearUploadedImage,
+        );
+
+    state = AsyncData(updatedUser);
   }
 
   Future<void> logout() async {
