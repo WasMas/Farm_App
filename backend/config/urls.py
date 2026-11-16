@@ -30,3 +30,5 @@ urlpatterns += [path('api/dashboard/', DashboardView.as_view())]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+urlpatterns += [path('api/ai-chat/', include('ai_chat.urls')),]
