@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../api.dart';
@@ -14,6 +15,7 @@ class InputSpec {
     this.secret = false,
     this.help,
   });
+
   final String keyName, label;
   final bool required, number, date, secret;
   final int lines;
@@ -27,6 +29,7 @@ Future<bool?> showRecordForm(
   required List<InputSpec> fields,
   Map<String, String> initial = const {},
   required Future<void> Function(Map<String, String>) onSave,
+  Future<Map<String, String>?> Function()? onPickLocation,
 }) => showDialog<bool>(
   context: context,
   barrierDismissible: false,
@@ -35,6 +38,7 @@ Future<bool?> showRecordForm(
     fields: fields,
     initial: initial,
     onSave: onSave,
+    onPickLocation: onPickLocation,
   ),
 );
 
@@ -44,26 +48,36 @@ class _RecordForm extends StatefulWidget {
     required this.fields,
     required this.initial,
     required this.onSave,
+    this.onPickLocation,
   });
+
   final String title;
   final List<InputSpec> fields;
   final Map<String, String> initial;
   final Future<void> Function(Map<String, String>) onSave;
+  final Future<Map<String, String>?> Function()? onPickLocation;
+
   @override
   State<_RecordForm> createState() => _RecordFormState();
 }
 
 class _RecordFormState extends State<_RecordForm> {
   final form = GlobalKey<FormState>();
+
   late final Map<String, TextEditingController> controllers;
+
   bool busy = false;
   String? error;
+
   @override
   void initState() {
     super.initState();
+
     controllers = {
       for (final f in widget.fields)
-        f.keyName: TextEditingController(text: widget.initial[f.keyName] ?? ''),
+        f.keyName: TextEditingController(
+          text: widget.initial[f.keyName] ?? '',
+        ),
     };
   }
 
@@ -72,19 +86,53 @@ class _RecordFormState extends State<_RecordForm> {
     for (final c in controllers.values) {
       c.dispose();
     }
+
     super.dispose();
+  }
+
+  Future<void> pickLocation() async {
+    if (widget.onPickLocation == null || busy) return;
+
+    try {
+      final selected = await widget.onPickLocation!();
+
+      if (!mounted || selected == null) return;
+
+      setState(() {
+        for (final entry in selected.entries) {
+          final controller = controllers[entry.key];
+
+          if (controller != null) {
+            controller.text = entry.value;
+          }
+        }
+
+        error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        error = 'Could not select the location: $e';
+      });
+    }
   }
 
   Future<void> save() async {
     if (!form.currentState!.validate()) return;
+
     setState(() {
       busy = true;
       error = null;
     });
+
     try {
       await widget.onSave(
-        controllers.map((k, v) => MapEntry(k, v.text.trim())),
+        controllers.map(
+          (k, v) => MapEntry(k, v.text.trim()),
+        ),
       );
+
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
@@ -115,7 +163,9 @@ class _RecordFormState extends State<_RecordForm> {
                 widget.title,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
+
               const SizedBox(height: 24),
+
               Flexible(
                 child: SingleChildScrollView(
                   child: Form(
@@ -129,8 +179,8 @@ class _RecordFormState extends State<_RecordForm> {
                                 ? DropdownButtonFormField<String>(
                                     initialValue:
                                         controllers[f.keyName]!.text.isEmpty
-                                        ? null
-                                        : controllers[f.keyName]!.text,
+                                            ? null
+                                            : controllers[f.keyName]!.text,
                                     isExpanded: true,
                                     decoration: InputDecoration(
                                       labelText: f.label,
@@ -142,17 +192,21 @@ class _RecordFormState extends State<_RecordForm> {
                                             value: e.key,
                                             child: Text(
                                               e.value,
-                                              overflow: TextOverflow.ellipsis,
+                                              overflow:
+                                                  TextOverflow.ellipsis,
                                             ),
                                           ),
                                         )
                                         .toList(),
                                     onChanged: busy
                                         ? null
-                                        : (v) => controllers[f.keyName]!.text =
-                                              v ?? '',
+                                        : (v) {
+                                            controllers[f.keyName]!.text =
+                                                v ?? '';
+                                          },
                                     validator: (v) =>
-                                        f.required && (v == null || v.isEmpty)
+                                        f.required &&
+                                            (v == null || v.isEmpty)
                                         ? 'Choose ${f.label.toLowerCase()}'
                                         : null,
                                   )
@@ -176,31 +230,34 @@ class _RecordFormState extends State<_RecordForm> {
                                               tooltip: 'Clear date',
                                               onPressed: busy
                                                   ? null
-                                                  : () =>
-                                                        controllers[f.keyName]!
-                                                            .clear(),
+                                                  : () => controllers[
+                                                        f.keyName]!
+                                                        .clear(),
                                               icon: const Icon(Icons.clear),
                                             )
                                           : f.date
-                                          ? const Icon(
-                                              Icons.calendar_today_outlined,
-                                            )
-                                          : null,
+                                              ? const Icon(
+                                                  Icons.calendar_today_outlined,
+                                                )
+                                              : null,
                                     ),
                                     onTap: !f.date
                                         ? null
                                         : () async {
-                                            final value = await showDatePicker(
+                                            final value =
+                                                await showDatePicker(
                                               context: context,
                                               initialDate:
                                                   DateTime.tryParse(
-                                                    controllers[f.keyName]!
+                                                    controllers[
+                                                            f.keyName]!
                                                         .text,
                                                   ) ??
                                                   DateTime.now(),
                                               firstDate: DateTime(1950),
                                               lastDate: DateTime(2100),
                                             );
+
                                             if (value != null) {
                                               controllers[f.keyName]!.text =
                                                   value
@@ -210,24 +267,41 @@ class _RecordFormState extends State<_RecordForm> {
                                           },
                                     validator: (v) {
                                       if (f.required &&
-                                          (v == null || v.trim().isEmpty)) {
+                                          (v == null ||
+                                              v.trim().isEmpty)) {
                                         return 'Enter ${f.label.toLowerCase()}';
                                       }
+
                                       if (f.number &&
                                           v != null &&
                                           v.isNotEmpty &&
                                           double.tryParse(v) == null) {
                                         return 'Enter a number';
                                       }
+
                                       return null;
                                     },
                                   ),
+                          ),
+
+                        // Optional map-selection button.
+                        if (widget.onPickLocation != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: OutlinedButton.icon(
+                              onPressed: busy ? null : pickLocation,
+                              icon: const Icon(Icons.map_outlined),
+                              label: const Text(
+                                'Choose position on map (optional)',
+                              ),
+                            ),
                           ),
                       ],
                     ),
                   ),
                 ),
               ),
+
               if (error != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -238,6 +312,7 @@ class _RecordFormState extends State<_RecordForm> {
                     ),
                   ),
                 ),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -247,7 +322,9 @@ class _RecordFormState extends State<_RecordForm> {
                         : () => Navigator.pop(context, false),
                     child: const Text('Cancel'),
                   ),
+
                   const SizedBox(width: 12),
+
                   FilledButton(
                     onPressed: busy ? null : save,
                     child: Text(busy ? 'Saving…' : 'Save'),
@@ -286,13 +363,16 @@ Future<void> confirmDelete(
       ],
     ),
   );
+
   if (confirmed != true) return;
+
   try {
     await remove();
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(apiError(e))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(apiError(e))),
+      );
     }
   }
 }
