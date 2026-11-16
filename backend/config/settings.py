@@ -9,11 +9,13 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL','gemini-2.5-flash-lite')
 INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
     'corsheaders', 'rest_framework', 'rest_framework_simplejwt.token_blacklist',
-    'accounts.apps.AccountsConfig', 'core', 'farms', 'crops', 'activities', 'weather', 'dashboard',
+    'accounts.apps.AccountsConfig', 'core', 'farms', 'crops', 'activities', 'weather', 'dashboard','ai_chat',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware', 'corsheaders.middleware.CorsMiddleware',
@@ -43,7 +45,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination', 'PAGE_SIZE': 100,
     'DEFAULT_FILTER_BACKENDS': ['rest_framework.filters.SearchFilter', 'rest_framework.filters.OrderingFilter'],
     'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.ScopedRateThrottle'],
-    'DEFAULT_THROTTLE_RATES': {'auth': '20/min', 'weather': '30/min'},
+    'DEFAULT_THROTTLE_RATES': {'auth': '20/min', 'weather': '30/min', 'ai_chat': '10/min',},
 }
 SIMPLE_JWT = {'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15), 'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
               'ROTATE_REFRESH_TOKENS': True, 'BLACKLIST_AFTER_ROTATION': True}
