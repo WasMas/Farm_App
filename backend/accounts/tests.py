@@ -55,3 +55,44 @@ class AuthenticationTests(TestCase):
     def test_bootstrap_requires_explicit_credentials(self):
         with self.assertRaises(CommandError):
             call_command('ensure_admin', stdout=StringIO())
+
+
+class AdminDashboardTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = User.objects.create_superuser(
+            username='admin',
+            email='admin@example.com',
+            password='A-admin-passphrase-481!',
+        )
+        self.farmer = User.objects.create_user(
+            username='farmer',
+            email='farmer@example.com',
+            password='A-farmer-passphrase-481!',
+            role=User.Role.FARMER,
+        )
+
+    def test_only_admin_can_view_dashboard(self):
+        self.client.force_authenticate(self.farmer)
+        self.assertEqual(
+            self.client.get('/api/admin/dashboard/').status_code,
+            403,
+        )
+
+        self.client.force_authenticate(self.admin)
+        response = self.client.get('/api/admin/dashboard/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('counts', response.data)
+        self.assertIn('users', response.data)
+
+    def test_admin_can_change_user_role(self):
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch(
+            f'/api/admin/users/{self.farmer.id}/',
+            {'role': 'expert'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.farmer.refresh_from_db()
+        self.assertEqual(self.farmer.role, User.Role.EXPERT)

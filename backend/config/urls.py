@@ -9,7 +9,14 @@ from activities.views import ActivityViewSet
 from weather.views import WeatherView, WeatherConfigurationView
 from dashboard.views import DashboardView
 from core.views import HealthView
-from accounts.views import RegisterView, LoginView, LogoutView, MeView
+from accounts.views import (
+    RegisterView,
+    LoginView,
+    LogoutView,
+    MeView,
+    AdminDashboardView,
+    AdminUserDetailView,
+)
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [path('admin/', admin.site.urls), path('api/health/', HealthView.as_view())]
@@ -27,6 +34,10 @@ router.register('activities', ActivityViewSet, basename='activity')
 urlpatterns += [path('api/', include(router.urls))]
 urlpatterns += [path('api/weather/', WeatherView.as_view()), path('api/weather/config/', WeatherConfigurationView.as_view())]
 urlpatterns += [path('api/dashboard/', DashboardView.as_view())]
+urlpatterns += [
+    path('api/admin/dashboard/', AdminDashboardView.as_view()),
+    path('api/admin/users/<int:pk>/', AdminUserDetailView.as_view()),
+]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
