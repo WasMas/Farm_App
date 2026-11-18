@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -18,20 +17,46 @@ class ChatRepository {
   }
 
   Future<int> getOrCreateConversation() async {
-    final response = await dio.get('ai-chat/conversations/');
-
-    final conversations = _extractList(response.data);
+    final conversations = await getConversations();
 
     if (conversations.isNotEmpty) {
       return conversations.first['id'] as int;
     }
 
+    return createConversation();
+  }
+
+  Future<List<Map<String, dynamic>>> getConversations() async {
+    final response = await dio.get('ai-chat/conversations/');
+
+    return _extractList(response.data)
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
+  }
+
+  Future<int> createConversation({String? title}) async {
     final created = await dio.post(
       'ai-chat/conversations/',
-      data: <String, dynamic>{},
+      data: title == null ? <String, dynamic>{} : {'title': title},
     );
 
     return created.data['id'] as int;
+  }
+
+  Future<Map<String, dynamic>> updateConversationTitle(
+    int conversationId,
+    String title,
+  ) async {
+    final response = await dio.patch(
+      'ai-chat/conversations/$conversationId/',
+      data: {'title': title},
+    );
+
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<void> deleteConversation(int conversationId) async {
+    await dio.delete('ai-chat/conversations/$conversationId/');
   }
 
   Future<List<ChatMessage>> getMessages(int conversationId) async {
@@ -41,9 +66,8 @@ class ChatRepository {
 
     return _extractList(response.data)
         .map(
-          (item) => ChatMessage.fromJson(
-            Map<String, dynamic>.from(item as Map),
-          ),
+          (item) =>
+              ChatMessage.fromJson(Map<String, dynamic>.from(item as Map)),
         )
         .toList();
   }
@@ -56,31 +80,21 @@ class ChatRepository {
     final formData = FormData();
 
     if (content.trim().isNotEmpty) {
-      formData.fields.add(
-        MapEntry('content', content.trim()),
-      );
+      formData.fields.add(MapEntry('content', content.trim()));
     }
 
     if (image != null) {
       final bytes = await image.readAsBytes();
 
       formData.files.add(
-        MapEntry(
-          'image',
-          MultipartFile.fromBytes(
-            bytes,
-            filename: image.name,
-          ),
-        ),
+        MapEntry('image', MultipartFile.fromBytes(bytes, filename: image.name)),
       );
     }
 
     final response = await dio.post(
       'ai-chat/conversations/$conversationId/messages/',
       data: formData,
-      options: Options(
-        contentType: Headers.multipartFormDataContentType,
-      ),
+      options: Options(contentType: Headers.multipartFormDataContentType),
     );
 
     final data = response.data as Map<String, dynamic>;
