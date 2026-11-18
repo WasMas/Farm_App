@@ -35,7 +35,7 @@ class ChatConversationListCreateView(generics.ListCreateAPIView):
         serializer.save(user=self.request.user)
 
 
-class ChatConversationDetailView(generics.RetrieveDestroyAPIView):
+class ChatConversationDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ChatConversationSerializer
     permission_classes = [IsAuthenticated]
 
