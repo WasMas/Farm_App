@@ -120,6 +120,19 @@ class FarmDetailScreen extends ConsumerWidget {
                                                   Icons.delete_outline,
                                                 ),
                                               ),
+                                              if (farm.canShare)
+                                                IconButton(
+                                                  tooltip: 'Assign worker',
+                                                  onPressed: () => _assignWorker(
+                                                    context,
+                                                    ref,
+                                                    id,
+                                                    field.id,
+                                                  ),
+                                                  icon: const Icon(
+                                                    Icons.assignment_ind_outlined,
+                                                  ),
+                                                ),
                                             ],
                                           )
                                         : null,
@@ -140,29 +153,8 @@ class FarmDetailScreen extends ConsumerWidget {
                 ),
                 if (farm.canShare)
                   TextButton(
-                    onPressed: () => showRecordForm(
-                      context,
-                      title: 'Share farm access',
-                      fields: const [
-                        InputSpec('username', 'Existing username'),
-                        InputSpec(
-                          'role',
-                          'Access',
-                          choices: {
-                            'manager': 'Manager — manage farm and records',
-                            'worker': 'Worker — manage field records',
-                            'viewer': 'Viewer — read only',
-                          },
-                        ),
-                      ],
-                      onSave: (data) async {
-                        await ref
-                            .read(farmRepositoryProvider)
-                            .share(id, data['username']!, data['role']!);
-                        ref.invalidate(membersProvider(id));
-                      },
-                    ),
-                    child: const Text('Add person'),
+                    onPressed: () => _createWorker(context, ref, id),
+                    child: const Text('Create worker'),
                   ),
               ],
             ),
@@ -225,4 +217,81 @@ class FarmDetailScreen extends ConsumerWidget {
           ],
         ),
       );
+}
+
+Future<void> _createWorker(
+  BuildContext context,
+  WidgetRef ref,
+  int farmId,
+) async {
+  try {
+      await showRecordForm(
+        context,
+        title: 'Create farm worker',
+        fields: const [
+          InputSpec('username', 'Username'),
+          InputSpec('email', 'Email'),
+          InputSpec('name', 'Full name'),
+          InputSpec('password', 'Temporary password'),
+        ],
+        onSave: (data) async {
+          await ref.read(farmRepositoryProvider).createWorker(farmId, data);
+          ref.invalidate(membersProvider(farmId));
+        },
+      );
+  } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+  }
+}
+
+Future<void> _assignWorker(
+  BuildContext context,
+  WidgetRef ref,
+  int farmId,
+  int fieldId,
+) async {
+  try {
+      final members = await ref.read(membersProvider(farmId).future);
+      final workers = members.where((member) => member['role'] == 'worker');
+      if (!context.mounted || workers.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Create a worker before assigning a field.')),
+          );
+        }
+        return;
+      }
+      await showRecordForm(
+        context,
+        title: 'Assign field worker',
+        fields: [
+          InputSpec(
+            'worker',
+            'Worker',
+            choices: {
+              for (final worker in workers)
+                '${worker['user']}': worker['username'] as String,
+            },
+          ),
+        ],
+        onSave: (data) async {
+          await ref.read(farmRepositoryProvider).assignWorker(
+            farmId,
+            field: fieldId,
+            worker: int.parse(data['worker']!),
+          );
+          ref.invalidate(fieldsProvider(farmId));
+        },
+      );
+  } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+  }
 }

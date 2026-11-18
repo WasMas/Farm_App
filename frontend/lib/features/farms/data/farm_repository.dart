@@ -40,4 +40,11 @@ class FarmRepository {
   );
   Future<void> unshare(int id, int user) =>
       dio.delete('farms/$id/members/$user/');
+  Future<void> createWorker(int id, Map<String, dynamic> data) =>
+      dio.post('farms/$id/workers/', data: data);
+  Future<void> assignWorker(int id, {required int field, required int worker}) =>
+      dio.post(
+        'farms/$id/assignments/',
+        data: {'field': field, 'worker': worker},
+      );
 }

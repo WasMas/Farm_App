@@ -25,9 +25,13 @@ class FarmField {
       farmName = j['farm_name'] as String,
       area = double.parse('${j['area']}'),
       soil = j['soil_type'] as String,
-      canEdit = j['can_edit'] == true;
+      canEdit = j['can_edit'] == true,
+      assignedWorkers = (j['assigned_workers'] as List? ?? [])
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
   final int id, farmId;
   final String name, farmName, soil;
   final double area;
   final bool canEdit;
+  final List<Map<String, dynamic>> assignedWorkers;
 }
