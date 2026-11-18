@@ -55,3 +55,19 @@ class Field(models.Model):
 
     def __str__(self):
         return f'{self.farm.name} / {self.name}'
+
+
+class FieldAssignment(models.Model):
+    field = models.ForeignKey(Field, on_delete=models.CASCADE, related_name='assignments')
+    worker = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='field_assignments')
+    assigned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='created_field_assignments',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['field', 'worker'], name='unique_field_worker_assignment'),
+        ]
