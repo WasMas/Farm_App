@@ -10,3 +10,7 @@ final adminRepositoryProvider = Provider(
 final adminDashboardProvider = FutureProvider(
   (ref) => ref.watch(adminRepositoryProvider).dashboard(),
 );
+
+final adminAuditProvider = FutureProvider(
+  (ref) => ref.watch(adminRepositoryProvider).audit(),
+);

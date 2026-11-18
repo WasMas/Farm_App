@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/widgets/page_parts.dart';
+import '../../../core/widgets/record_form.dart';
 import 'admin_provider.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
@@ -19,6 +20,7 @@ class AdminDashboardScreen extends ConsumerWidget {
           const PageHeading(
             'Administration.',
             'Users and system activity across Fieldbook.',
+            action: _CreateOwnerButton(),
           ),
           dashboard.when(
             loading: () => const LinearProgressIndicator(),
@@ -50,6 +52,9 @@ class AdminDashboardScreen extends ConsumerWidget {
                             ('Active crops', counts['active_crops']),
                             ('Activities', counts['activities']),
                             ('New users (7d)', counts['new_users_7d']),
+                            ('Pending recommendations', counts['pending_recommendations']),
+                            ('AI recommendations', counts['ai_recommendations']),
+                            ('Audit events', counts['audit_events']),
                           ])
                             SizedBox(
                               width: itemWidth,
@@ -96,44 +101,96 @@ class AdminDashboardScreen extends ConsumerWidget {
                             subtitle: Text(
                               '${user['email']}  •  ${user['role']}',
                             ),
-                            trailing: SizedBox(
-                              width: 150,
-                              child: DropdownButtonFormField<String>(
-                                initialValue: user['role'] as String,
-                                isDense: true,
-                                decoration: const InputDecoration(
-                                  labelText: 'Role',
+                            trailing: Wrap(
+                              spacing: 8,
+                              children: [
+                                SizedBox(
+                                  width: 150,
+                                  child: DropdownButtonFormField<String>(
+                                    initialValue: user['role'] as String,
+                                    isDense: true,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Role',
+                                    ),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'admin',
+                                        child: Text('Admin'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'owner',
+                                        child: Text('Farm owner'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'farmer',
+                                        child: Text('Farmer'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'worker',
+                                        child: Text('Worker'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'expert',
+                                        child: Text('Expert'),
+                                      ),
+                                    ],
+                                    onChanged: (role) async {
+                                      if (role == null) return;
+                                      await ref
+                                          .read(adminRepositoryProvider)
+                                          .updateUser(
+                                            userId: user['id'] as int,
+                                            role: role,
+                                          );
+                                      ref.invalidate(adminDashboardProvider);
+                                    },
+                                  ),
                                 ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'admin',
-                                    child: Text('Admin'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'farmer',
-                                    child: Text('Farmer'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'expert',
-                                    child: Text('Expert'),
-                                  ),
-                                ],
-                                onChanged: (role) async {
-                                  if (role == null) return;
-                                  await ref
-                                      .read(adminRepositoryProvider)
-                                      .updateUser(
-                                        userId: user['id'] as int,
-                                        role: role,
-                                      );
-                                  ref.invalidate(adminDashboardProvider);
-                                },
-                              ),
+                                Switch(
+                                  value: user['is_active'] == true,
+                                  onChanged: (active) async {
+                                    await ref
+                                        .read(adminRepositoryProvider)
+                                        .updateUser(
+                                          userId: user['id'] as int,
+                                          isActive: active,
+                                        );
+                                    ref.invalidate(adminDashboardProvider);
+                                  },
+                                ),
+                              ],
                             ),
                           ),
                           const Divider(height: 1),
                         ],
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Audit log',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 12),
+                  ref.watch(adminAuditProvider).when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (error, _) => ErrorState(
+                      error,
+                      () => ref.invalidate(adminAuditProvider),
+                    ),
+                    data: (events) => Card(
+                      child: Column(
+                        children: [
+                          for (final event in events.take(20))
+                            ListTile(
+                              dense: true,
+                              title: Text(
+                                '${event['action']} ${event['entity']} #${event['object_id']}',
+                              ),
+                              subtitle: Text('By ${event['actor']}'),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -144,4 +201,38 @@ class AdminDashboardScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _CreateOwnerButton extends ConsumerWidget {
+  const _CreateOwnerButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => FilledButton.icon(
+    onPressed: () async {
+      try {
+        await showRecordForm(
+          context,
+          title: 'Create farm owner',
+          fields: const [
+            InputSpec('username', 'Username'),
+            InputSpec('email', 'Email'),
+            InputSpec('name', 'Full name'),
+            InputSpec('password', 'Temporary password'),
+          ],
+          onSave: (data) async {
+            await ref.read(adminRepositoryProvider).createOwner(data);
+            ref.invalidate(adminDashboardProvider);
+          },
+        );
+      } catch (error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(error.toString())));
+        }
+      }
+    },
+    icon: const Icon(Icons.person_add_outlined),
+    label: const Text('Create owner'),
+  );
 }

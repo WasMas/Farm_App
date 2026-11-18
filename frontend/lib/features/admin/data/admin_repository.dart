@@ -8,6 +8,11 @@ class AdminRepository {
     (await dio.get('admin/dashboard/')).data as Map,
   );
 
+  Future<Map<String, dynamic>> createOwner(Map<String, dynamic> data) async =>
+      Map<String, dynamic>.from(
+        (await dio.post('admin/dashboard/', data: data)).data as Map,
+      );
+
   Future<Map<String, dynamic>> updateUser({
     required int userId,
     String? role,
@@ -21,4 +26,9 @@ class AdminRepository {
 
     return Map<String, dynamic>.from(response.data as Map);
   }
+
+  Future<List<Map<String, dynamic>>> audit() async =>
+      ((await dio.get('admin/audit/')).data as List)
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
 }
