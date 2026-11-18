@@ -1,5 +1,4 @@
-
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../api.dart';
 
@@ -30,6 +29,8 @@ Future<bool?> showRecordForm(
   Map<String, String> initial = const {},
   required Future<void> Function(Map<String, String>) onSave,
   Future<Map<String, String>?> Function()? onPickLocation,
+  Widget Function(ValueChanged<Map<String, String>> onSelected)?
+  locationPickerBuilder,
 }) => showDialog<bool>(
   context: context,
   barrierDismissible: false,
@@ -39,6 +40,7 @@ Future<bool?> showRecordForm(
     initial: initial,
     onSave: onSave,
     onPickLocation: onPickLocation,
+    locationPickerBuilder: locationPickerBuilder,
   ),
 );
 
@@ -49,6 +51,7 @@ class _RecordForm extends StatefulWidget {
     required this.initial,
     required this.onSave,
     this.onPickLocation,
+    this.locationPickerBuilder,
   });
 
   final String title;
@@ -56,6 +59,8 @@ class _RecordForm extends StatefulWidget {
   final Map<String, String> initial;
   final Future<void> Function(Map<String, String>) onSave;
   final Future<Map<String, String>?> Function()? onPickLocation;
+  final Widget Function(ValueChanged<Map<String, String>> onSelected)?
+  locationPickerBuilder;
 
   @override
   State<_RecordForm> createState() => _RecordFormState();
@@ -75,9 +80,7 @@ class _RecordFormState extends State<_RecordForm> {
 
     controllers = {
       for (final f in widget.fields)
-        f.keyName: TextEditingController(
-          text: widget.initial[f.keyName] ?? '',
-        ),
+        f.keyName: TextEditingController(text: widget.initial[f.keyName] ?? ''),
     };
   }
 
@@ -118,6 +121,22 @@ class _RecordFormState extends State<_RecordForm> {
     }
   }
 
+  void applyLocation(Map<String, String> selected) {
+    if (busy) return;
+
+    setState(() {
+      for (final entry in selected.entries) {
+        final controller = controllers[entry.key];
+
+        if (controller != null) {
+          controller.text = entry.value;
+        }
+      }
+
+      error = null;
+    });
+  }
+
   Future<void> save() async {
     if (!form.currentState!.validate()) return;
 
@@ -128,9 +147,7 @@ class _RecordFormState extends State<_RecordForm> {
 
     try {
       await widget.onSave(
-        controllers.map(
-          (k, v) => MapEntry(k, v.text.trim()),
-        ),
+        controllers.map((k, v) => MapEntry(k, v.text.trim())),
       );
 
       if (mounted) Navigator.pop(context, true);
@@ -145,198 +162,209 @@ class _RecordFormState extends State<_RecordForm> {
   }
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !busy,
-    child: Dialog(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 520,
-          maxHeight: MediaQuery.sizeOf(context).height * .88,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                widget.title,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
+  Widget build(BuildContext context) {
+    final formPanel = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(widget.title, style: Theme.of(context).textTheme.headlineSmall),
 
-              const SizedBox(height: 24),
+        const SizedBox(height: 24),
 
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Form(
-                    key: form,
-                    child: Column(
-                      children: [
-                        for (final f in widget.fields)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: f.choices != null
-                                ? DropdownButtonFormField<String>(
-                                    initialValue:
-                                        controllers[f.keyName]!.text.isEmpty
-                                            ? null
-                                            : controllers[f.keyName]!.text,
-                                    isExpanded: true,
-                                    decoration: InputDecoration(
-                                      labelText: f.label,
-                                      helperText: f.help,
-                                    ),
-                                    items: f.choices!.entries
-                                        .map(
-                                          (e) => DropdownMenuItem(
-                                            value: e.key,
-                                            child: Text(
-                                              e.value,
-                                              overflow:
-                                                  TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: busy
-                                        ? null
-                                        : (v) {
-                                            controllers[f.keyName]!.text =
-                                                v ?? '';
-                                          },
-                                    validator: (v) =>
-                                        f.required &&
-                                            (v == null || v.isEmpty)
-                                        ? 'Choose ${f.label.toLowerCase()}'
-                                        : null,
-                                  )
-                                : TextFormField(
-                                    controller: controllers[f.keyName],
-                                    enabled: !busy,
-                                    maxLines: f.lines,
-                                    obscureText: f.secret,
-                                    readOnly: f.date,
-                                    keyboardType: f.number
-                                        ? const TextInputType.numberWithOptions(
-                                            decimal: true,
-                                            signed: true,
-                                          )
-                                        : null,
-                                    decoration: InputDecoration(
-                                      labelText: f.label,
-                                      helperText: f.help,
-                                      suffixIcon: f.date && !f.required
-                                          ? IconButton(
-                                              tooltip: 'Clear date',
-                                              onPressed: busy
-                                                  ? null
-                                                  : () => controllers[
-                                                        f.keyName]!
-                                                        .clear(),
-                                              icon: const Icon(Icons.clear),
-                                            )
-                                          : f.date
-                                              ? const Icon(
-                                                  Icons.calendar_today_outlined,
-                                                )
-                                              : null,
-                                    ),
-                                    onTap: !f.date
-                                        ? null
-                                        : () async {
-                                            final value =
-                                                await showDatePicker(
-                                              context: context,
-                                              initialDate:
-                                                  DateTime.tryParse(
-                                                    controllers[
-                                                            f.keyName]!
-                                                        .text,
-                                                  ) ??
-                                                  DateTime.now(),
-                                              firstDate: DateTime(1950),
-                                              lastDate: DateTime(2100),
-                                            );
-
-                                            if (value != null) {
-                                              controllers[f.keyName]!.text =
-                                                  value
-                                                      .toIso8601String()
-                                                      .substring(0, 10);
-                                            }
-                                          },
-                                    validator: (v) {
-                                      if (f.required &&
-                                          (v == null ||
-                                              v.trim().isEmpty)) {
-                                        return 'Enter ${f.label.toLowerCase()}';
-                                      }
-
-                                      if (f.number &&
-                                          v != null &&
-                                          v.isNotEmpty &&
-                                          double.tryParse(v) == null) {
-                                        return 'Enter a number';
-                                      }
-
-                                      return null;
-                                    },
-                                  ),
-                          ),
-
-                        // Optional map-selection button.
-                        if (widget.onPickLocation != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: OutlinedButton.icon(
-                              onPressed: busy ? null : pickLocation,
-                              icon: const Icon(Icons.map_outlined),
-                              label: const Text(
-                                'Choose position on map (optional)',
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              if (error != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    error!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+        Flexible(
+          child: SingleChildScrollView(
+            child: Form(
+              key: form,
+              child: Column(
                 children: [
-                  TextButton(
-                    onPressed: busy
-                        ? null
-                        : () => Navigator.pop(context, false),
-                    child: const Text('Cancel'),
-                  ),
+                  for (final f in widget.fields)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: f.choices != null
+                          ? DropdownButtonFormField<String>(
+                              initialValue: controllers[f.keyName]!.text.isEmpty
+                                  ? null
+                                  : controllers[f.keyName]!.text,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                labelText: f.label,
+                                helperText: f.help,
+                              ),
+                              items: f.choices!.entries
+                                  .map(
+                                    (e) => DropdownMenuItem(
+                                      value: e.key,
+                                      child: Text(
+                                        e.value,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: busy
+                                  ? null
+                                  : (v) {
+                                      controllers[f.keyName]!.text = v ?? '';
+                                    },
+                              validator: (v) =>
+                                  f.required && (v == null || v.isEmpty)
+                                  ? 'Choose ${f.label.toLowerCase()}'
+                                  : null,
+                            )
+                          : TextFormField(
+                              controller: controllers[f.keyName],
+                              enabled: !busy,
+                              maxLines: f.lines,
+                              obscureText: f.secret,
+                              readOnly: f.date,
+                              keyboardType: f.number
+                                  ? const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                      signed: true,
+                                    )
+                                  : null,
+                              decoration: InputDecoration(
+                                labelText: f.label,
+                                helperText: f.help,
+                                suffixIcon: f.date && !f.required
+                                    ? IconButton(
+                                        tooltip: 'Clear date',
+                                        onPressed: busy
+                                            ? null
+                                            : () => controllers[f.keyName]!
+                                                  .clear(),
+                                        icon: const Icon(Icons.clear),
+                                      )
+                                    : f.date
+                                    ? const Icon(Icons.calendar_today_outlined)
+                                    : null,
+                              ),
+                              onTap: !f.date
+                                  ? null
+                                  : () async {
+                                      final value = await showDatePicker(
+                                        context: context,
+                                        initialDate:
+                                            DateTime.tryParse(
+                                              controllers[f.keyName]!.text,
+                                            ) ??
+                                            DateTime.now(),
+                                        firstDate: DateTime(1950),
+                                        lastDate: DateTime(2100),
+                                      );
 
-                  const SizedBox(width: 12),
+                                      if (value != null) {
+                                        controllers[f.keyName]!.text = value
+                                            .toIso8601String()
+                                            .substring(0, 10);
+                                      }
+                                    },
+                              validator: (v) {
+                                if (f.required &&
+                                    (v == null || v.trim().isEmpty)) {
+                                  return 'Enter ${f.label.toLowerCase()}';
+                                }
 
-                  FilledButton(
-                    onPressed: busy ? null : save,
-                    child: Text(busy ? 'Saving…' : 'Save'),
-                  ),
+                                if (f.number &&
+                                    v != null &&
+                                    v.isNotEmpty &&
+                                    double.tryParse(v) == null) {
+                                  return 'Enter a number';
+                                }
+
+                                return null;
+                              },
+                            ),
+                    ),
+
+                  if (widget.onPickLocation != null &&
+                      widget.locationPickerBuilder == null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: OutlinedButton.icon(
+                        onPressed: busy ? null : pickLocation,
+                        icon: const Icon(Icons.map_outlined),
+                        label: const Text('Choose position on map (optional)'),
+                      ),
+                    ),
                 ],
               ),
-            ],
+            ),
+          ),
+        ),
+
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
+              onPressed: busy ? null : () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+
+            const SizedBox(width: 12),
+
+            FilledButton(
+              onPressed: busy ? null : save,
+              child: Text(busy ? 'Saving…' : 'Save'),
+            ),
+          ],
+        ),
+      ],
+    );
+    final locationPicker = widget.locationPickerBuilder?.call(applyLocation);
+
+    return PopScope(
+      canPop: !busy,
+      child: Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: locationPicker == null ? 520 : 1040,
+            maxHeight: MediaQuery.sizeOf(context).height * .88,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                if (locationPicker == null) return formPanel;
+
+                final sideBySide = constraints.maxWidth >= 760;
+                final pickerPanel = SizedBox(
+                  height: constraints.maxHeight,
+                  child: locationPicker,
+                );
+
+                return sideBySide
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(child: formPanel),
+                          const SizedBox(width: 24),
+                          Expanded(child: pickerPanel),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          Flexible(flex: 55, child: formPanel),
+                          const SizedBox(height: 24),
+                          Flexible(flex: 45, child: locationPicker),
+                        ],
+                      );
+              },
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 Future<void> confirmDelete(
@@ -370,9 +398,8 @@ Future<void> confirmDelete(
     await remove();
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiError(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(apiError(e))));
     }
   }
 }

@@ -1,7 +1,5 @@
-
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart';
 
 import '../../../core/widgets/record_form.dart';
 import '../domain/farm.dart';
@@ -34,23 +32,13 @@ Future<void> editFarm(BuildContext context, WidgetRef ref, [Farm? farm]) async {
             'latitude': farm.latitude ?? '',
             'longitude': farm.longitude ?? '',
           },
-    onPickLocation: () async {
-      final selected = await Navigator.of(
-        context,
-        rootNavigator: true,
-      ).push<LatLng>(
-        MaterialPageRoute(
-          builder: (_) => const FarmLocationPickerScreen(),
-        ),
-      );
-
-      if (selected == null) return null;
-
-      return {
-        'latitude': selected.latitude.toStringAsFixed(6),
-        'longitude': selected.longitude.toStringAsFixed(6),
-      };
-    },
+    locationPickerBuilder: (onSelected) => FarmLocationPickerPanel(
+      onSelected: (location, displayName) => onSelected({
+        'location': displayName,
+        'latitude': location.latitude.toStringAsFixed(6),
+        'longitude': location.longitude.toStringAsFixed(6),
+      }),
+    ),
     onSave: (data) async {
       await ref.read(farmRepositoryProvider).saveFarm({
         ...data,
