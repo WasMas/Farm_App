@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/auth_provider.dart';
+import '../../features/ai_chat/presentation/chat_flyout.dart';
 import '../theme.dart';
 import '../theme_mode.dart';
 
@@ -74,10 +75,12 @@ class FarmShell extends ConsumerWidget {
                       NavigationDestination(icon: Icon(d.icon), label: d.title),
                   ],
                 ),
-          body: Row(
+          body: Stack(
             children: [
-              if (desktop)
-                SizedBox(
+              Row(
+                children: [
+                  if (desktop)
+                    SizedBox(
                   width: 232,
                   child: ColoredBox(
                     color: FarmColors.olive,
@@ -187,8 +190,15 @@ class FarmShell extends ConsumerWidget {
                       ),
                     ),
                   ),
-                ),
-              Expanded(child: SafeArea(child: child)),
+                    ),
+                  Expanded(child: SafeArea(child: child)),
+                ],
+              ),
+              Positioned(
+                right: 24,
+                bottom: desktop ? 24 : 16,
+                child: const ChatFlyout(),
+              ),
             ],
           ),
         );
