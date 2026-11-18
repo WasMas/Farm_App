@@ -6,13 +6,44 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='first_name', required=False)
+    name = serializers.CharField(
+        source='first_name',
+        required=False,
+        max_length=150
+    )
+
+    profile_image = serializers.ImageField(
+        required=False,
+        allow_null=True
+    )
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'name', 'role', 'is_staff']
-        read_only_fields = ['id', 'username', 'role', 'is_staff']
+        fields = [
+            'id',
+            'username',
+            'email',
+            'name',
+            'role',
+            'is_staff',
+            'bio',
+            'profile_image',
+            'profile_image_url',
+        ]
 
+        read_only_fields = [
+            'id',
+            'username',
+            'role',
+            'is_staff',
+        ]
+
+    def validate_profile_image_url(self, value):
+        if value and not value.startswith(('https://', 'http://')):
+            raise serializers.ValidationError(
+                'Please provide a valid HTTP or HTTPS image URL.'
+            )
+        return value
 
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, trim_whitespace=False)

@@ -60,8 +60,7 @@ reference data and audit records. Public registration always creates a farmer.
 A built preview may already be running at **http://127.0.0.1:8080/** in the
 current workspace, with Django on port 8000. Use that preview directly. For a
 new hot-reload session, stop the existing static server first, or use another
-web port. In local debug mode, loopback origins on any port are allowed; in
-other environments, add the exact frontend origin to `CORS_ALLOWED_ORIGINS`.
+web port and add its origin to `CORS_ALLOWED_ORIGINS`.
 
 ```powershell
 cd frontend
