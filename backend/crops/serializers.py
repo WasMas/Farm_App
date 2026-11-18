@@ -1,7 +1,7 @@
 from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import serializers
-from farms.access import visible_farms, can_work
+from farms.access import visible_farms, can_work_field
 from farms.models import Field
 from .models import CropType, CropCycle
 
@@ -9,11 +9,31 @@ from .models import CropType, CropCycle
 class CropTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CropType
-        fields = ['id', 'name', 'description']
+        fields = ['id', 'name', 'description', 'suitable_soils', 'stage_days']
 
     def validate_name(self, value):
         if CropType.objects.filter(name__iexact=value).exclude(pk=getattr(self.instance, 'pk', None)).exists():
             raise serializers.ValidationError('This crop type already exists.')
+        return value
+
+    def validate_suitable_soils(self, value):
+        allowed = {choice[0] for choice in Field.Soil.choices}
+        if not isinstance(value, list) or any(soil not in allowed for soil in value):
+            raise serializers.ValidationError(
+                f'Soil types must be a list containing only: {sorted(allowed)}.'
+            )
+        return value
+
+    def validate_stage_days(self, value):
+        if not isinstance(value, dict) or any(
+            stage not in {'germination', 'vegetative', 'flowering', 'fruiting', 'mature', 'harvest'}
+            or not isinstance(days, int)
+            or days < 1
+            for stage, days in value.items()
+        ):
+            raise serializers.ValidationError(
+                'Stage timing must map valid growth stages to positive whole days.'
+            )
         return value
 
 
@@ -23,10 +43,12 @@ class CropCycleSerializer(serializers.ModelSerializer):
     farm_name = serializers.CharField(source='field.farm.name', read_only=True)
     farm = serializers.IntegerField(source='field.farm_id', read_only=True)
     can_edit = serializers.SerializerMethodField()
+    soil_compatible = serializers.SerializerMethodField()
+    soil_warning = serializers.SerializerMethodField()
 
     class Meta:
         model = CropCycle
-        fields = ['id', 'field', 'field_name', 'farm', 'farm_name', 'crop_type', 'crop_name', 'variety', 'planting_date', 'end_date', 'area', 'current_stage', 'status', 'can_edit']
+        fields = ['id', 'field', 'field_name', 'farm', 'farm_name', 'crop_type', 'crop_name', 'variety', 'planting_date', 'end_date', 'area', 'current_stage', 'status', 'can_edit', 'soil_compatible', 'soil_warning']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -34,11 +56,23 @@ class CropCycleSerializer(serializers.ModelSerializer):
             self.fields['field'].queryset = Field.objects.filter(farm__in=visible_farms(self.context['request'].user))
 
     def get_can_edit(self, obj):
-        return can_work(self.context['request'].user, obj.field.farm)
+        return can_work_field(self.context['request'].user, obj.field)
+
+    def get_soil_compatible(self, obj):
+        soils = obj.crop_type.suitable_soils
+        return not soils or obj.field.soil_type in soils
+
+    def get_soil_warning(self, obj):
+        if self.get_soil_compatible(obj):
+            return ''
+        return (
+            f'{obj.crop_type.name} is not listed as suitable for '
+            f'{obj.field.get_soil_type_display().lower()} soil.'
+        )
 
     def validate(self, attrs):
         field = attrs.get('field', getattr(self.instance, 'field', None))
-        if not can_work(self.context['request'].user, field.farm):
+        if not can_work_field(self.context['request'].user, field):
             raise serializers.ValidationError({'field': 'You have read-only access.'})
         if self.instance:
             if field.pk != self.instance.field_id or attrs.get('crop_type', self.instance.crop_type).pk != self.instance.crop_type_id:
