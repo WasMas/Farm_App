@@ -1,26 +1,19 @@
-
-
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../farms/domain/farm.dart';
 
 class LocationPickerScreen extends StatefulWidget {
-  const LocationPickerScreen({
-    super.key,
-    required this.farms,
-  });
+  const LocationPickerScreen({super.key, required this.farms});
 
   final List<Farm> farms;
 
   @override
-  State<LocationPickerScreen> createState() =>
-      _LocationPickerScreenState();
+  State<LocationPickerScreen> createState() => _LocationPickerScreenState();
 }
 
-class _LocationPickerScreenState
-    extends State<LocationPickerScreen> {
+class _LocationPickerScreenState extends State<LocationPickerScreen> {
   Farm? selectedFarm;
 
   // Only farms with valid saved coordinates can appear on the map.
@@ -39,10 +32,7 @@ class _LocationPickerScreenState
   }
 
   LatLng positionOf(Farm farm) {
-    return LatLng(
-      double.parse(farm.latitude!),
-      double.parse(farm.longitude!),
-    );
+    return LatLng(double.parse(farm.latitude!), double.parse(farm.longitude!));
   }
 
   @override
@@ -54,9 +44,7 @@ class _LocationPickerScreenState
         : const LatLng(34.0, 9.0);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Choose a farm'),
-      ),
+      appBar: AppBar(title: const Text('Choose a farm')),
       body: Column(
         children: [
           Expanded(
@@ -85,8 +73,7 @@ class _LocationPickerScreenState
                       ),
                       MarkerLayer(
                         markers: farms.map((farm) {
-                          final isSelected =
-                              selectedFarm?.id == farm.id;
+                          final isSelected = selectedFarm?.id == farm.id;
 
                           return Marker(
                             point: positionOf(farm),
@@ -117,8 +104,7 @@ class _LocationPickerScreenState
                                       color: isSelected
                                           ? Colors.green
                                           : Colors.white,
-                                      borderRadius:
-                                          BorderRadius.circular(6),
+                                      borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
                                       farm.name,
@@ -141,9 +127,7 @@ class _LocationPickerScreenState
                       ),
                       const RichAttributionWidget(
                         attributions: [
-                          TextSourceAttribution(
-                            '© OpenStreetMap contributors',
-                          ),
+                          TextSourceAttribution('© OpenStreetMap contributors'),
                         ],
                       ),
                     ],
