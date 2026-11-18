@@ -14,6 +14,11 @@ const destinations = [
   (path: '/activities', title: 'Day’s work', icon: Icons.edit_note_outlined),
   (path: '/profile', title: 'My Profile', icon: Icons.account_circle_outlined),
   (path: '/weather', title: 'Weather', icon: Icons.wb_sunny_outlined),
+  (
+    path: '/admin',
+    title: 'Administration',
+    icon: Icons.admin_panel_settings_outlined,
+  ),
 ];
 
 class FarmShell extends ConsumerWidget {
@@ -22,10 +27,16 @@ class FarmShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final path = GoRouterState.of(context).uri.path;
-    final index = destinations.indexWhere(
+    final user = ref.watch(authProvider).asData?.value;
+    final visibleDestinations = destinations
+        .where(
+          (destination) =>
+              destination.path != '/admin' || user?.isAdmin == true,
+        )
+        .toList();
+    final index = visibleDestinations.indexWhere(
       (d) => d.path == '/' ? path == '/' : path.startsWith(d.path),
     );
-    final user = ref.watch(authProvider).asData?.value;
     Future<void> logout() async {
       try {
         await ref.read(authProvider.notifier).logout();
@@ -69,9 +80,9 @@ class FarmShell extends ConsumerWidget {
                   labelBehavior:
                       NavigationDestinationLabelBehavior.onlyShowSelected,
                   onDestinationSelected: (i) =>
-                      context.go(destinations[i].path),
+                      context.go(visibleDestinations[i].path),
                   destinations: [
-                    for (final d in destinations)
+                    for (final d in visibleDestinations)
                       NavigationDestination(icon: Icon(d.icon), label: d.title),
                   ],
                 ),
@@ -129,10 +140,13 @@ class FarmShell extends ConsumerWidget {
                                         const SizedBox(height: 32),
                                         for (
                                           var i = 0;
-                                          i < destinations.length;
+                                          i < visibleDestinations.length;
                                           i++
                                         )
-                                          _NavItem(i, selected: i == index),
+                                          _NavItem(
+                                            destination: visibleDestinations[i],
+                                            selected: i == index,
+                                          ),
                                         const SizedBox(height: 32),
                                         const Spacer(),
                                         const Text(
@@ -210,8 +224,8 @@ class FarmShell extends ConsumerWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem(this.index, {required this.selected});
-  final int index;
+  const _NavItem({required this.destination, required this.selected});
+  final ({String path, String title, IconData icon}) destination;
   final bool selected;
   @override
   Widget build(BuildContext context) => Padding(
@@ -220,21 +234,21 @@ class _NavItem extends StatelessWidget {
       color: selected ? FarmColors.wheat : Colors.transparent,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
-        onTap: () => context.go(destinations[index].path),
+        onTap: () => context.go(destination.path),
         borderRadius: BorderRadius.circular(6),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
           child: Row(
             children: [
               Icon(
-                destinations[index].icon,
+                destination.icon,
                 size: 20,
                 color: selected ? FarmColors.olive : FarmColors.paper,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  destinations[index].title,
+                  destination.title,
                   style: TextStyle(
                     color: selected ? FarmColors.olive : FarmColors.paper,
                   ),

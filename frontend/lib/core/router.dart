@@ -13,6 +13,7 @@ import '../features/crops/presentation/crop_types_screen.dart';
 import '../features/activities/presentation/activities_screen.dart';
 import '../features/weather/presentation/weather_screen.dart';
 import '../features/auth/presentation/profile_screen.dart';
+import '../features/admin/presentation/admin_dashboard_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -25,6 +26,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (!loggedIn) return state.uri.path == '/login' ? null : '/login';
       if (state.uri.path == '/login' || state.uri.path == '/loading') {
         return '/';
+      }
+      if (state.uri.path == '/admin') {
+        final user = auth.asData?.value;
+        if (user?.isAdmin != true) return '/';
       }
       return null;
     },
@@ -59,6 +64,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/profile',
             builder: (context, state) => const ProfileScreen(),
+          ),
+          GoRoute(
+            path: '/admin',
+            builder: (context, state) => const AdminDashboardScreen(),
           ),
         ],
       ),
