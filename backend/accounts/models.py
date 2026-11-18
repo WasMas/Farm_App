@@ -5,7 +5,9 @@ from django.db import models
 class User(AbstractUser):
     class Role(models.TextChoices):
         ADMIN = 'admin', 'Administrator'
+        OWNER = 'owner', 'Farm owner'
         FARMER = 'farmer', 'Farmer'
+        WORKER = 'worker', 'Farm worker'
         EXPERT = 'expert', 'Agricultural expert'
 
     email = models.EmailField(unique=True)

@@ -63,6 +63,50 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
+class WorkerSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+    name = serializers.CharField(source='first_name', max_length=150)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'name', 'password']
+        read_only_fields = ['id']
+
+    def validate(self, attrs):
+        validate_password(attrs['password'], User(**{k: v for k, v in attrs.items() if k != 'password'}))
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        return User.objects.create_user(role=User.Role.WORKER, **validated_data)
+
+
+class OwnerSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+    name = serializers.CharField(source='first_name', max_length=150)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'name', 'password']
+        read_only_fields = ['id']
+
+    def validate(self, attrs):
+        validate_password(attrs['password'], User(**{k: v for k, v in attrs.items() if k != 'password'}))
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        return User.objects.create_user(role=User.Role.OWNER, **validated_data)
+
+
+class UserSummarySerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='first_name', read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'name', 'role', 'is_active']
+
+
 class LoginSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
