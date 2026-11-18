@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/widgets/record_form.dart';
 import '../domain/farm.dart';
+import 'farm_location_picker_screen.dart';
 import 'farm_providers.dart';
 
 Future<void> editFarm(BuildContext context, WidgetRef ref, [Farm? farm]) async {
@@ -31,12 +32,20 @@ Future<void> editFarm(BuildContext context, WidgetRef ref, [Farm? farm]) async {
             'latitude': farm.latitude ?? '',
             'longitude': farm.longitude ?? '',
           },
+    locationPickerBuilder: (onSelected) => FarmLocationPickerPanel(
+      onSelected: (location, displayName) => onSelected({
+        'location': displayName,
+        'latitude': location.latitude.toStringAsFixed(6),
+        'longitude': location.longitude.toStringAsFixed(6),
+      }),
+    ),
     onSave: (data) async {
       await ref.read(farmRepositoryProvider).saveFarm({
         ...data,
         'latitude': data['latitude']!.isEmpty ? null : data['latitude'],
         'longitude': data['longitude']!.isEmpty ? null : data['longitude'],
       }, farm?.id);
+
       ref.invalidate(farmsProvider);
       if (farm != null) ref.invalidate(farmProvider(farm.id));
     },
@@ -79,6 +88,7 @@ Future<void> editField(
         ...data,
         'farm': farmId,
       }, field?.id);
+
       ref.invalidate(fieldsProvider);
       ref.invalidate(farmsProvider);
       ref.invalidate(farmProvider(farmId));

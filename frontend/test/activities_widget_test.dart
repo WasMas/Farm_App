@@ -3,7 +3,7 @@ import 'package:fieldbook/core/theme.dart';
 import 'package:fieldbook/features/activities/domain/activity.dart';
 import 'package:fieldbook/features/activities/presentation/activity_providers.dart';
 import 'package:fieldbook/features/activities/presentation/activities_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -47,18 +47,13 @@ REST_FRAMEWORK = {
 }
 SIMPLE_JWT = {'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15), 'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
               'ROTATE_REFRESH_TOKENS': True, 'BLACKLIST_AFTER_ROTATION': True}
-CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:8080').split(',')
-    if origin.strip()
-]
-CORS_ALLOWED_ORIGIN_REGEXES = (
-    [r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$'] if DEBUG else []
-)
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:8080').split(',')
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Tunis'
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

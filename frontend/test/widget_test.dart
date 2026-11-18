@@ -1,6 +1,6 @@
 import 'package:fieldbook/app.dart';
 import 'package:fieldbook/core/session_store.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'support/memory_tokens.dart';
 
