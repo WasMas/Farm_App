@@ -3,7 +3,7 @@ import 'package:fieldbook/core/theme.dart';
 import 'package:fieldbook/features/dashboard/domain/farm_summary.dart';
 import 'package:fieldbook/features/dashboard/presentation/dashboard_provider.dart';
 import 'package:fieldbook/features/dashboard/presentation/home_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

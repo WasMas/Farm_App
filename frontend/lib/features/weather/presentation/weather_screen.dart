@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../farms/domain/farm.dart';
 
 import '../../../core/widgets/page_parts.dart';
@@ -9,7 +10,6 @@ import '../domain/weather_report.dart';
 import 'weather_panel.dart';
 import 'weather_providers.dart';
 import 'location_picker_screen.dart';
-
 
 class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
@@ -21,21 +21,19 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   int? selectedFarm;
   int refresh = 0;
 
-Future<void> chooseWeatherLocation(List<Farm> farms) async {
-  final selected = await Navigator.push<Farm>(
-    context,
-    MaterialPageRoute(
-      builder: (_) => LocationPickerScreen(farms: farms),
-    ),
-  );
+  Future<void> chooseWeatherLocation(List<Farm> farms) async {
+    final selected = await Navigator.push<Farm>(
+      context,
+      MaterialPageRoute(builder: (_) => LocationPickerScreen(farms: farms)),
+    );
 
-  if (!mounted || selected == null) return;
+    if (!mounted || selected == null) return;
 
-  setState(() {
-    selectedFarm = selected.id;
-    refresh = 0;
-  });
-}
+    setState(() {
+      selectedFarm = selected.id;
+      refresh = 0;
+    });
+  }
 
   Future<void> configure() async {
     try {
@@ -132,7 +130,6 @@ Future<void> chooseWeatherLocation(List<Farm> farms) async {
               ],
             ),
             data: (farms) {
-              
               if (farms.isEmpty) {
                 return Column(
                   children: [
@@ -191,10 +188,11 @@ Future<void> chooseWeatherLocation(List<Farm> farms) async {
                     ],
                   ),
 
-                   const SizedBox(height: 12),OutlinedButton.icon(
-                     onPressed: () => chooseWeatherLocation(farms),
-                     icon: const Icon(Icons.map_outlined),
-                     label: const Text('Choose farm on map'),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => chooseWeatherLocation(farms),
+                    icon: const Icon(Icons.map_outlined),
+                    label: const Text('Choose farm on map'),
                   ),
 
                   const SizedBox(height: 24),
