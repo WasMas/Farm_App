@@ -32,7 +32,20 @@ class FarmTests(TestCase):
         self.assertEqual(self.client.patch(f'/api/farms/{self.farm.pk}/', {'name': 'Wrong'}).status_code, 403)
         self.assertEqual(self.client.post('/api/fields/', {'farm': self.farm.pk, 'name': 'B', 'area': 1, 'soil_type': 'clay'}).status_code, 400)
         FarmMembership.objects.filter(user=self.other).update(role='worker')
-        self.assertEqual(self.client.post('/api/fields/', {'farm': self.farm.pk, 'name': 'B', 'area': 1, 'soil_type': 'clay'}).status_code, 201)
+        self.assertEqual(self.client.post('/api/fields/', {'farm': self.farm.pk, 'name': 'B', 'area': 1, 'soil_type': 'clay'}).status_code, 400)
+        self.client.force_authenticate(self.owner)
+        field_response = self.client.post(
+            '/api/fields/',
+            {'farm': self.farm.pk, 'name': 'B', 'area': 1, 'soil_type': 'clay'},
+        )
+        self.assertEqual(field_response.status_code, 201)
+        assignment_response = self.client.post(
+            f'/api/farms/{self.farm.pk}/assignments/',
+            {'field': field_response.data['id'], 'worker': self.other.pk},
+        )
+        self.assertEqual(assignment_response.status_code, 201)
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.client.get('/api/fields/').data['count'], 1)
         self.assertEqual(self.client.post(f'/api/farms/{self.farm.pk}/members/', {'username': 'owner', 'role': 'manager'}).status_code, 403)
 
     def test_expert_cannot_write_even_with_worker_membership(self):

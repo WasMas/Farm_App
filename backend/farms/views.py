@@ -4,12 +4,18 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from accounts.models import User
+from accounts.serializers import WorkerSerializer, UserSummarySerializer
 from core.viewsets import SafeModelViewSet
 from core.models import record_event
 from core.query import positive_id
-from .access import visible_farms, can_manage, require_work
-from .models import FarmMembership, Field
-from .serializers import FarmSerializer, FieldSerializer, MembershipSerializer
+from .access import visible_farms, can_manage, require_work, can_work_field
+from .models import FarmMembership, Field, FieldAssignment
+from .serializers import (
+    FarmSerializer,
+    FieldSerializer,
+    MembershipSerializer,
+    FieldAssignmentSerializer,
+)
 
 
 class FarmViewSet(SafeModelViewSet):
@@ -59,6 +65,35 @@ class FarmViewSet(SafeModelViewSet):
         record_event(request.user, membership, 'share')
         return Response(MembershipSerializer(membership).data, status=201)
 
+    @action(detail=True, methods=['post'], url_path='workers')
+    def create_worker(self, request, pk=None):
+        farm = self.get_object()
+        if not (request.user.is_staff or farm.owner_id == request.user.pk):
+            raise PermissionDenied('Only the farm owner or an administrator may create workers.')
+        serializer = WorkerSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        worker = serializer.save()
+        FarmMembership.objects.create(farm=farm, user=worker, role=FarmMembership.Role.WORKER)
+        record_event(request.user, worker, 'create_worker')
+        return Response(UserSummarySerializer(worker).data, status=201)
+
+    @action(detail=True, methods=['post'], url_path='assignments')
+    def assign_worker(self, request, pk=None):
+        farm = self.get_object()
+        if not (request.user.is_staff or farm.owner_id == request.user.pk):
+            raise PermissionDenied('Only the farm owner or an administrator may assign workers.')
+        field = get_object_or_404(Field, pk=request.data.get('field'), farm=farm)
+        worker = get_object_or_404(User, pk=request.data.get('worker'), is_active=True)
+        if not farm.memberships.filter(user=worker, role=FarmMembership.Role.WORKER).exists():
+            raise ValidationError('The worker must belong to this farm first.')
+        assignment, _ = FieldAssignment.objects.update_or_create(
+            field=field,
+            worker=worker,
+            defaults={'assigned_by': request.user},
+        )
+        record_event(request.user, assignment, 'assign')
+        return Response(FieldAssignmentSerializer(assignment).data, status=201)
+
     @action(detail=True, methods=['delete'], url_path=r'members/(?P<user_id>[^/.]+)')
     def remove_member(self, request, user_id=None, pk=None):
         farm = self.get_object()
@@ -76,6 +111,8 @@ class FieldViewSet(SafeModelViewSet):
 
     def get_queryset(self):
         queryset = Field.objects.filter(farm__in=visible_farms(self.request.user)).select_related('farm')
+        if self.request.user.role == User.Role.WORKER:
+            queryset = queryset.filter(assignments__worker=self.request.user)
         if self.request.query_params.get('farm'):
             queryset = queryset.filter(farm_id=positive_id(self.request.query_params['farm'], 'farm'))
         return queryset
@@ -89,5 +126,6 @@ class FieldViewSet(SafeModelViewSet):
         return super().update(*args, **kwargs)
 
     def perform_destroy(self, instance):
-        require_work(self.request.user, instance.farm)
+        if not can_manage(self.request.user, instance.farm):
+            raise PermissionDenied('Only the farm owner or manager may delete fields.')
         super().perform_destroy(instance)
