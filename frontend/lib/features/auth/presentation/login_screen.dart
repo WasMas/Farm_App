@@ -14,14 +14,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final form = GlobalKey<FormState>();
   final username = TextEditingController(),
-      password = TextEditingController(),
-      name = TextEditingController(),
-      email = TextEditingController();
-  bool register = false, busy = false, obscure = true;
+      password = TextEditingController();
+  bool busy = false, obscure = true;
   String? error;
   @override
   void dispose() {
-    for (final c in [username, password, name, email]) {
+    for (final c in [username, password]) {
       c.dispose();
     }
     super.dispose();
@@ -35,16 +33,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
     try {
       final controller = ref.read(authProvider.notifier);
-      if (register) {
-        await controller.register(
-          username.text.trim(),
-          name.text.trim(),
-          email.text.trim(),
-          password.text,
-        );
-      } else {
-        await controller.login(username.text.trim(), password.text);
-      }
+      await controller.login(username.text.trim(), password.text);
     } catch (e) {
       if (mounted) setState(() => error = apiError(e));
     } finally {
@@ -82,14 +71,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      register ? 'Plant your first page.' : 'Back to the land.',
+                      'Back to the land.',
                       style: Theme.of(context).textTheme.displaySmall,
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      register
-                          ? 'A place for your fields, seasons, and everyday work.'
-                          : 'Your fields. Your seasons. Everything in its place.',
+                      'Your fields. Your seasons. Everything in its place.',
                     ),
                     const SizedBox(height: 32),
                     TextFormField(
@@ -102,32 +89,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           : null,
                     ),
                     const SizedBox(height: 16),
-                    if (register) ...[
-                      TextFormField(
-                        key: const Key('name'),
-                        controller: name,
-                        decoration: const InputDecoration(
-                          labelText: 'Your name',
-                        ),
-                        validator: (v) => v == null || v.trim().isEmpty
-                            ? 'Enter your name'
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        key: const Key('email'),
-                        controller: email,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(labelText: 'Email'),
-                        validator: (v) =>
-                            v == null ||
-                                !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                                    .hasMatch(v)
-                            ? 'Enter a valid email'
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
                     TextFormField(
                       key: const Key('password'),
                       controller: password,
@@ -148,8 +109,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       validator: (v) => v == null || v.isEmpty
                           ? 'Enter your password'
-                          : register && v.length < 8
-                          ? 'Use at least 8 characters'
                           : null,
                     ),
                     if (error != null)
@@ -171,24 +130,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: Text(
                           busy
                               ? 'Opening your journal…'
-                              : register
-                              ? 'Create account'
                               : 'Open my journal',
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: busy
-                          ? null
-                          : () => setState(() {
-                              register = !register;
-                              error = null;
-                            }),
-                      child: Text(
-                        register
-                            ? 'Already have an account? Sign in'
-                            : 'New here? Create an account',
                       ),
                     ),
                   ],
