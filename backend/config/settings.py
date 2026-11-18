@@ -15,7 +15,7 @@ INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
     'corsheaders', 'rest_framework', 'rest_framework_simplejwt.token_blacklist',
-    'accounts.apps.AccountsConfig', 'core', 'farms', 'crops', 'activities', 'weather', 'dashboard','ai_chat',
+    'accounts.apps.AccountsConfig', 'core', 'farms', 'crops', 'activities', 'weather', 'dashboard', 'ai_chat', 'recommendations', 'predictions',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware', 'corsheaders.middleware.CorsMiddleware',
