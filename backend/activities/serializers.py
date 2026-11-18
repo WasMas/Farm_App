@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 from crops.models import CropCycle
-from farms.access import visible_farms, can_work
+from farms.access import visible_farms, can_work_field
 from .models import Activity
 
 UNITS = {'irrigation': {'m3', 'l'}, 'fertilization': {'kg', 'g', 'l'}, 'treatment': {'kg', 'g', 'l', 'ml'}, 'harvest': {'kg', 't', 'items'}}
@@ -25,13 +25,13 @@ class ActivitySerializer(serializers.ModelSerializer):
             self.fields['cycle'].queryset = CropCycle.objects.filter(field__farm__in=visible_farms(self.context['request'].user))
 
     def get_can_edit(self, obj):
-        return can_work(self.context['request'].user, obj.cycle.field.farm)
+        return can_work_field(self.context['request'].user, obj.cycle.field)
 
     def validate(self, attrs):
         def value(key, default=None):
             return attrs.get(key, getattr(self.instance, key, default))
         cycle, kind, date = value('cycle'), value('kind'), value('date')
-        if not can_work(self.context['request'].user, cycle.field.farm):
+        if not can_work_field(self.context['request'].user, cycle.field):
             raise serializers.ValidationError({'cycle': 'You have read-only access.'})
         if self.instance and cycle.pk != self.instance.cycle_id:
             raise serializers.ValidationError({'cycle': 'An activity cannot be moved to another planting.'})

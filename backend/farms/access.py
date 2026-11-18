@@ -1,6 +1,6 @@
 from django.db.models import Q
 from rest_framework.exceptions import PermissionDenied
-from .models import Farm
+from .models import Farm, Field
 
 
 def visible_farms(user):
@@ -10,11 +10,29 @@ def visible_farms(user):
 
 
 def can_manage(user, farm):
-    return user.is_staff or (user.role != 'expert' and (farm.owner_id == user.pk or farm.memberships.filter(user=user, role='manager').exists()))
+    return user.is_staff or (
+        user.role not in {'expert', 'worker'}
+        and (farm.owner_id == user.pk or farm.memberships.filter(user=user, role='manager').exists())
+    )
 
 
 def can_work(user, farm):
-    return can_manage(user, farm) or (user.role != 'expert' and farm.memberships.filter(user=user, role='worker').exists())
+    return can_manage(user, farm) or (
+        user.role not in {'expert', 'worker'}
+        and farm.memberships.filter(user=user, role='worker').exists()
+    ) or (
+        user.role == 'worker'
+        and farm.memberships.filter(user=user, role='worker').exists()
+    )
+
+
+def can_work_field(user, field: Field):
+    if can_manage(user, field.farm):
+        return True
+    return (
+        user.role == 'worker'
+        and field.assignments.filter(worker=user).exists()
+    )
 
 
 def require_work(user, farm):

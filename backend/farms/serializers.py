@@ -1,7 +1,7 @@
 from django.db.models import Sum
 from rest_framework import serializers
-from .models import Farm, Field, FarmMembership
-from .access import visible_farms, can_manage, can_work
+from .models import Farm, Field, FarmMembership, FieldAssignment
+from .access import visible_farms, can_manage, can_work, can_work_field
 
 
 class FarmSerializer(serializers.ModelSerializer):
@@ -41,10 +41,11 @@ class FarmSerializer(serializers.ModelSerializer):
 class FieldSerializer(serializers.ModelSerializer):
     farm_name = serializers.CharField(source='farm.name', read_only=True)
     can_edit = serializers.SerializerMethodField()
+    assigned_workers = serializers.SerializerMethodField()
 
     class Meta:
         model = Field
-        fields = ['id', 'farm', 'farm_name', 'name', 'area', 'soil_type', 'can_edit']
+        fields = ['id', 'farm', 'farm_name', 'name', 'area', 'soil_type', 'can_edit', 'assigned_workers']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -52,14 +53,20 @@ class FieldSerializer(serializers.ModelSerializer):
             self.fields['farm'].queryset = visible_farms(self.context['request'].user)
 
     def get_can_edit(self, obj):
-        return can_work(self.context['request'].user, obj.farm)
+        return can_work_field(self.context['request'].user, obj)
+
+    def get_assigned_workers(self, obj):
+        return [
+            {'id': assignment.worker_id, 'username': assignment.worker.username}
+            for assignment in obj.assignments.select_related('worker')
+        ]
 
     def validate(self, attrs):
         farm = attrs.get('farm', getattr(self.instance, 'farm', None))
         if self.instance and farm.pk != self.instance.farm_id:
             raise serializers.ValidationError({'farm': 'A field cannot be moved between farms.'})
-        if not can_work(self.context['request'].user, farm):
-            raise serializers.ValidationError({'farm': 'You have read-only access to this farm.'})
+        if not can_manage(self.context['request'].user, farm):
+            raise serializers.ValidationError({'farm': 'Only the farm owner or manager may manage fields.'})
         # Called inside the view's atomic create/update transaction.
         farm = Farm.objects.select_for_update().get(pk=farm.pk)
         used = farm.fields.exclude(pk=getattr(self.instance, 'pk', None)).aggregate(total=Sum('area'))['total'] or 0
@@ -80,3 +87,12 @@ class MembershipSerializer(serializers.ModelSerializer):
         model = FarmMembership
         fields = ['id', 'user', 'username', 'role']
         read_only_fields = ['id', 'user']
+
+
+class FieldAssignmentSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='worker.username', read_only=True)
+
+    class Meta:
+        model = FieldAssignment
+        fields = ['id', 'worker', 'username', 'field', 'assigned_by', 'created_at']
+        read_only_fields = ['id', 'assigned_by', 'created_at']
