@@ -3,7 +3,7 @@ import 'package:fieldbook/core/theme.dart';
 import 'package:fieldbook/features/crops/domain/crop_cycle.dart';
 import 'package:fieldbook/features/crops/presentation/crop_providers.dart';
 import 'package:fieldbook/features/crops/presentation/crops_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
