@@ -11,7 +11,15 @@ from datetime import timedelta
 from farms.models import Farm, Field
 from crops.models import CropCycle
 from activities.models import Activity
-from .serializers import RegistrationSerializer, UserSerializer, LoginSerializer
+from core.models import AuditEvent
+from recommendations.models import Recommendation
+from .serializers import (
+    RegistrationSerializer,
+    UserSerializer,
+    LoginSerializer,
+    OwnerSerializer,
+    UserSummarySerializer,
+)
 from .models import User
 
 
@@ -43,6 +51,13 @@ class AdminDashboardView(APIView):
                 'active_crops': CropCycle.objects.filter(status=CropCycle.Status.ACTIVE).count(),
                 'activities': Activity.objects.count(),
                 'new_users_7d': User.objects.filter(date_joined__gte=week).count(),
+                'pending_recommendations': Recommendation.objects.filter(
+                    status=Recommendation.Status.PENDING,
+                ).count(),
+                'ai_recommendations': Recommendation.objects.filter(
+                    source='ai',
+                ).count(),
+                'audit_events': AuditEvent.objects.count(),
             },
             'users': [
                 {
@@ -60,6 +75,12 @@ class AdminDashboardView(APIView):
             ],
         })
 
+    def post(self, request):
+        serializer = OwnerSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        owner = serializer.save()
+        return Response(UserSummarySerializer(owner).data, status=status.HTTP_201_CREATED)
+
 
 class AdminUserDetailView(APIView):
     permission_classes = [IsAdmin]
@@ -70,7 +91,13 @@ class AdminUserDetailView(APIView):
         is_active = request.data.get('is_active')
 
         if role is not None:
-            if role not in {User.Role.ADMIN, User.Role.FARMER, User.Role.EXPERT}:
+            if role not in {
+                User.Role.ADMIN,
+                User.Role.OWNER,
+                User.Role.FARMER,
+                User.Role.WORKER,
+                User.Role.EXPERT,
+            }:
                 return Response(
                     {'role': 'Choose admin, farmer, or expert.'},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -98,6 +125,24 @@ class AdminUserDetailView(APIView):
             'date_joined': user.date_joined,
             'last_login': user.last_login,
         })
+
+
+class AdminAuditView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        events = AuditEvent.objects.select_related('actor')[:100]
+        return Response([
+            {
+                'id': event.id,
+                'actor': event.actor.username if event.actor else 'System',
+                'action': event.action,
+                'entity': event.entity,
+                'object_id': event.object_id,
+                'recorded_at': event.recorded_at,
+            }
+            for event in events
+        ])
 
 
 class RegisterView(generics.CreateAPIView):

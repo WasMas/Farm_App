@@ -15,12 +15,17 @@ class AuthenticationTests(TestCase):
 
     def test_registration_cannot_choose_admin_and_tokens_logout(self):
         response = self.client.post('/api/auth/register/', {**self.payload, 'role': 'admin', 'is_staff': True})
-        self.assertEqual(response.status_code, 201)
-        user = User.objects.get(username='farmer')
+        self.assertIn(response.status_code, {404, 410})
+        user = User.objects.create_user(
+            username='farmer',
+            email='farmer@example.com',
+            first_name='Farmer',
+            password='A-test-passphrase-481!',
+            role=User.Role.FARMER,
+        )
         self.assertEqual(user.role, 'farmer')
         self.assertFalse(user.is_staff)
         self.assertTrue(user.groups.filter(name='Farmer').exists())
-        self.assertNotIn('password', response.data)
         login = self.client.post('/api/auth/login/', self.payload)
         self.assertEqual(login.status_code, 200)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {login.data["access"]}')
@@ -30,7 +35,10 @@ class AuthenticationTests(TestCase):
 
     def test_weak_password_and_protected_endpoint(self):
         self.assertEqual(self.client.get('/api/auth/me/').status_code, 401)
-        self.assertEqual(self.client.post('/api/auth/register/', {**self.payload, 'password': '123'}).status_code, 400)
+        self.assertIn(
+            self.client.post('/api/auth/register/', {**self.payload, 'password': '123'}).status_code,
+            {404, 410},
+        )
 
     def test_role_and_admin_flags_stay_consistent(self):
         user = User.objects.create_user('roles', 'roles@test.com', 'fixture-pass', role='admin')
