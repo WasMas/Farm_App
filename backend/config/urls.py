@@ -10,17 +10,17 @@ from weather.views import WeatherView, WeatherConfigurationView
 from dashboard.views import DashboardView
 from core.views import HealthView
 from accounts.views import (
-    RegisterView,
     LoginView,
     LogoutView,
     MeView,
     AdminDashboardView,
     AdminUserDetailView,
+    AdminAuditView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [path('admin/', admin.site.urls), path('api/health/', HealthView.as_view())]
-urlpatterns += [path('api/auth/register/', RegisterView.as_view()), path('api/auth/login/', LoginView.as_view()),
+urlpatterns += [path('api/auth/login/', LoginView.as_view()),
                 path('api/auth/refresh/', TokenRefreshView.as_view()), path('api/auth/logout/', LogoutView.as_view()),
                 path('api/auth/me/', MeView.as_view())]
 admin.site.site_header = 'Fieldbook administration'
@@ -37,6 +37,7 @@ urlpatterns += [path('api/dashboard/', DashboardView.as_view())]
 urlpatterns += [
     path('api/admin/dashboard/', AdminDashboardView.as_view()),
     path('api/admin/users/<int:pk>/', AdminUserDetailView.as_view()),
+    path('api/admin/audit/', AdminAuditView.as_view()),
 ]
 
 if settings.DEBUG:
