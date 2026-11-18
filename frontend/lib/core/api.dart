@@ -6,7 +6,7 @@ import 'data_revision.dart';
 
 const apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://localhost:8000/api/',
+  defaultValue: 'http://127.0.0.1:8000/api/',
 );
 final dioProvider = Provider<Dio>((ref) {
   final dio = createDio(
