@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from farms.views import FarmViewSet, FieldViewSet
 from crops.views import CropTypeViewSet, CropCycleViewSet
@@ -25,3 +27,6 @@ router.register('activities', ActivityViewSet, basename='activity')
 urlpatterns += [path('api/', include(router.urls))]
 urlpatterns += [path('api/weather/', WeatherView.as_view()), path('api/weather/config/', WeatherConfigurationView.as_view())]
 urlpatterns += [path('api/dashboard/', DashboardView.as_view())]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

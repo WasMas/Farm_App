@@ -11,6 +11,7 @@ const destinations = [
   (path: '/farms', title: 'Farms & fields', icon: Icons.landscape_outlined),
   (path: '/crops', title: 'Plantings', icon: Icons.spa_outlined),
   (path: '/activities', title: 'Day’s work', icon: Icons.edit_note_outlined),
+  (path: '/profile', title: 'My Profile', icon: Icons.account_circle_outlined),
   (path: '/weather', title: 'Weather', icon: Icons.wb_sunny_outlined),
 ];
 
