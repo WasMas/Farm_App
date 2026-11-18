@@ -15,7 +15,7 @@ __pycache__/
 .coverage
 htmlcov/
 staticfiles/
-media/
+
 *.log
 # Flutter / Dart and native generated output
 .dart_tool/
