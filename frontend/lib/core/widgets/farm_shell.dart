@@ -15,6 +15,16 @@ const destinations = [
   (path: '/profile', title: 'My Profile', icon: Icons.account_circle_outlined),
   (path: '/weather', title: 'Weather', icon: Icons.wb_sunny_outlined),
   (
+    path: '/recommendations',
+    title: 'Recommendations',
+    icon: Icons.notifications_active_outlined,
+  ),
+  (
+    path: '/predictions',
+    title: 'Predictions',
+    icon: Icons.analytics_outlined,
+  ),
+  (
     path: '/admin',
     title: 'Administration',
     icon: Icons.admin_panel_settings_outlined,

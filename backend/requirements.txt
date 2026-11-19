@@ -7,3 +7,7 @@ python-dotenv==1.2.4
 cryptography==50.0.2
 Pillow==13.0.0
 google-genai
+torch
+transformers
+huggingface-hub
+safetensors

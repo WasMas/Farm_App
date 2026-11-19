@@ -7,6 +7,8 @@ from farms.models import Field
 class CropType(models.Model):
     name = models.CharField(max_length=80, unique=True)
     description = models.TextField(blank=True)
+    suitable_soils = models.JSONField(default=list, blank=True)
+    stage_days = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ['name', 'id']

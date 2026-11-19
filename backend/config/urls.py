@@ -44,3 +44,5 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [path('api/ai-chat/', include('ai_chat.urls')),]
+urlpatterns += [path('api/recommendations/', include('recommendations.urls')),]
+urlpatterns += [path('api/predictions/', include('predictions.urls')),]

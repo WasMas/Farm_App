@@ -14,6 +14,8 @@ import '../features/activities/presentation/activities_screen.dart';
 import '../features/weather/presentation/weather_screen.dart';
 import '../features/auth/presentation/profile_screen.dart';
 import '../features/admin/presentation/admin_dashboard_screen.dart';
+import '../features/recommendations/presentation/recommendations_screen.dart';
+import '../features/predictions/presentation/predictions_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -46,6 +48,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
           GoRoute(path: '/crops', builder: (_, _) => const CropsScreen()),
           GoRoute(path: '/weather', builder: (_, _) => const WeatherScreen()),
+          GoRoute(
+            path: '/recommendations',
+            builder: (_, _) => const RecommendationsScreen(),
+          ),
+          GoRoute(
+            path: '/predictions',
+            builder: (_, _) => const PredictionsScreen(),
+          ),
           GoRoute(
             path: '/activities',
             builder: (_, _) => const ActivitiesScreen(),
