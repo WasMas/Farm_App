@@ -48,15 +48,11 @@ class FarmTests(TestCase):
         self.assertEqual(self.client.get('/api/fields/').data['count'], 1)
         self.assertEqual(self.client.post(f'/api/farms/{self.farm.pk}/members/', {'username': 'owner', 'role': 'manager'}).status_code, 403)
 
-    def test_expert_cannot_write_even_with_worker_membership(self):
-        expert = User.objects.create_user('expert', 'expert@test.com', 'fixture-pass', role='expert')
-        FarmMembership.objects.create(farm=self.farm, user=expert, role='worker')
-        self.client.force_authenticate(expert)
+    def test_worker_cannot_create_farms_but_can_read_assigned_farm(self):
+        worker = User.objects.create_user('worker', 'worker@test.com', 'fixture-pass', role='worker')
+        FarmMembership.objects.create(farm=self.farm, user=worker, role='worker')
+        self.client.force_authenticate(worker)
         self.assertEqual(self.client.get('/api/farms/').data['count'], 1)
         self.assertEqual(self.client.post('/api/farms/', {'name': 'Denied', 'location': 'Tunis', 'total_area': 3}).status_code, 403)
-        self.assertEqual(self.client.post('/api/fields/', {'farm': self.farm.pk, 'name': 'Denied', 'area': 1, 'soil_type': 'clay'}).status_code, 400)
-        self.farm.owner = expert
-        self.farm.save()
-        self.assertFalse(self.client.get(f'/api/farms/{self.farm.pk}/').data['can_share'])
         self.assertEqual(self.client.delete(f'/api/farms/{self.farm.pk}/').status_code, 403)
         self.assertEqual(self.client.post(f'/api/farms/{self.farm.pk}/members/', {'username': 'other', 'role': 'manager'}).status_code, 403)

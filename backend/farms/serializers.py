@@ -21,7 +21,7 @@ class FarmSerializer(serializers.ModelSerializer):
 
     def get_can_share(self, obj):
         user = self.context['request'].user
-        return user.is_staff or (user.role != 'expert' and obj.owner_id == user.pk)
+        return user.is_staff or obj.owner_id == user.pk
 
     def get_can_work(self, obj):
         return can_work(self.context['request'].user, obj)

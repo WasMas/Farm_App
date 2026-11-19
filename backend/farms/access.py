@@ -4,21 +4,21 @@ from .models import Farm, Field
 
 
 def visible_farms(user):
-    if user.is_staff:
+    if user.is_superuser or user.is_staff or getattr(user, 'role', None) == 'admin':
         return Farm.objects.all()
     return Farm.objects.filter(Q(owner=user) | Q(pk__in=user.farm_memberships.values('farm_id')))
 
 
 def can_manage(user, farm):
-    return user.is_staff or (
-        user.role not in {'expert', 'worker'}
+    return user.is_superuser or user.is_staff or getattr(user, 'role', None) == 'admin' or (
+        user.role != 'worker'
         and (farm.owner_id == user.pk or farm.memberships.filter(user=user, role='manager').exists())
     )
 
 
 def can_work(user, farm):
     return can_manage(user, farm) or (
-        user.role not in {'expert', 'worker'}
+        user.role != 'worker'
         and farm.memberships.filter(user=user, role='worker').exists()
     ) or (
         user.role == 'worker'

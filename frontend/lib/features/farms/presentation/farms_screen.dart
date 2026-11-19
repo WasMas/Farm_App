@@ -16,7 +16,7 @@ class FarmsScreen extends ConsumerWidget {
       PageHeading(
         'Your land.',
         'Every farm has a story. Keep yours here.',
-        action: ref.watch(authProvider).asData?.value?.role == 'expert'
+        action: ref.watch(authProvider).asData?.value?.role == 'worker'
             ? null
             : FilledButton.icon(
                 onPressed: () => editFarm(context, ref),

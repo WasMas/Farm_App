@@ -30,8 +30,8 @@ class FarmViewSet(SafeModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        if self.request.user.role == 'expert' and not self.request.user.is_staff:
-            raise PermissionDenied('Expert accounts have read-only farm access in this MVP.')
+        if self.request.user.role == 'worker':
+            raise PermissionDenied('Workers cannot create farms.')
         instance = serializer.save(owner=self.request.user)
         record_event(self.request.user, instance, 'create')
 
@@ -45,7 +45,7 @@ class FarmViewSet(SafeModelViewSet):
         return super().update(*args, **kwargs)
 
     def perform_destroy(self, instance):
-        if not (self.request.user.is_staff or (self.request.user.role != 'expert' and instance.owner_id == self.request.user.pk)):
+        if not (self.request.user.is_staff or instance.owner_id == self.request.user.pk):
             raise PermissionDenied('Only the owner may delete this farm.')
         super().perform_destroy(instance)
 
@@ -54,7 +54,7 @@ class FarmViewSet(SafeModelViewSet):
         farm = self.get_object()
         if request.method == 'GET':
             return Response(MembershipSerializer(farm.memberships.select_related('user'), many=True).data)
-        if not (request.user.is_staff or (request.user.role != 'expert' and farm.owner_id == request.user.pk)):
+        if not (request.user.is_staff or farm.owner_id == request.user.pk):
             raise PermissionDenied('Only the owner may manage farm access.')
         user = get_object_or_404(User, username=request.data.get('username'), is_active=True)
         if user.pk == farm.owner_id:
@@ -97,7 +97,7 @@ class FarmViewSet(SafeModelViewSet):
     @action(detail=True, methods=['delete'], url_path=r'members/(?P<user_id>[^/.]+)')
     def remove_member(self, request, user_id=None, pk=None):
         farm = self.get_object()
-        if not (request.user.is_staff or (request.user.role != 'expert' and farm.owner_id == request.user.pk)):
+        if not (request.user.is_staff or farm.owner_id == request.user.pk):
             raise PermissionDenied('Only the owner may manage farm access.')
         membership = get_object_or_404(FarmMembership, farm=farm, user_id=user_id)
         record_event(request.user, membership, 'unshare')

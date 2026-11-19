@@ -76,8 +76,49 @@ class FarmDetailScreen extends ConsumerWidget {
                                     contentPadding: const EdgeInsets.all(16),
                                     leading: const Icon(Icons.crop_square),
                                     title: Text(field.name),
-                                    subtitle: Text(
-                                      '${field.area.toStringAsFixed(2)} ha  ·  ${field.soil} soil',
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${field.area.toStringAsFixed(2)} ha  ·  ${field.soil} soil',
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          field.assignedWorkers.isEmpty
+                                              ? 'No workers assigned'
+                                              : 'Assigned workers:',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium,
+                                        ),
+                                        if (field.assignedWorkers.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 6,
+                                            ),
+                                            child: Wrap(
+                                              spacing: 6,
+                                              runSpacing: 6,
+                                              children: [
+                                                for (final worker
+                                                    in field.assignedWorkers)
+                                                  Chip(
+                                                    avatar: const Icon(
+                                                      Icons.person_outline,
+                                                      size: 16,
+                                                    ),
+                                                    label: Text(
+                                                      worker['username']
+                                                          as String,
+                                                    ),
+                                                    visualDensity:
+                                                        VisualDensity.compact,
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                     trailing: field.canEdit
                                         ? Wrap(
@@ -128,6 +169,12 @@ class FarmDetailScreen extends ConsumerWidget {
                                                     ref,
                                                     id,
                                                     field.id,
+                                                    field.assignedWorkers
+                                                        .map(
+                                                          (worker) =>
+                                                              worker['id'] as int,
+                                                        )
+                                                        .toSet(),
                                                   ),
                                                   icon: const Icon(
                                                     Icons.assignment_ind_outlined,
@@ -253,14 +300,25 @@ Future<void> _assignWorker(
   WidgetRef ref,
   int farmId,
   int fieldId,
+  Set<int> assignedWorkerIds,
 ) async {
   try {
       final members = await ref.read(membersProvider(farmId).future);
-      final workers = members.where((member) => member['role'] == 'worker');
+      final workers = members.where(
+        (member) =>
+            member['role'] == 'worker' &&
+            !assignedWorkerIds.contains(member['user'] as int),
+      );
       if (!context.mounted || workers.isEmpty) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Create a worker before assigning a field.')),
+            SnackBar(
+              content: Text(
+                assignedWorkerIds.isEmpty
+                    ? 'Create a worker before assigning a field.'
+                    : 'All farm workers are already assigned to this field.',
+              ),
+            ),
           );
         }
         return;
@@ -285,6 +343,12 @@ Future<void> _assignWorker(
             worker: int.parse(data['worker']!),
           );
           ref.invalidate(fieldsProvider(farmId));
+          await ref.read(fieldsProvider(farmId).future);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Worker assigned to field.')),
+            );
+          }
         },
       );
   } catch (error) {
