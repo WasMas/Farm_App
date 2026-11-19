@@ -9,8 +9,6 @@ def configure_groups(**kwargs):
     for role, label in User.Role.choices:
         group, _ = Group.objects.get_or_create(name=label)
         permissions = Permission.objects.filter(content_type__app_label__in=['farms', 'crops', 'activities', 'weather'])
-        if role == User.Role.EXPERT:
-            permissions = permissions.filter(codename__startswith='view_')
         if role == User.Role.ADMIN:
             permissions = Permission.objects.all()
         group.permissions.set(permissions)

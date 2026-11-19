@@ -21,6 +21,7 @@ from .serializers import (
     UserSummarySerializer,
 )
 from .models import User
+from core.models import record_event
 
 
 class IsAdmin(BasePermission):
@@ -79,6 +80,7 @@ class AdminDashboardView(APIView):
         serializer = OwnerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         owner = serializer.save()
+        record_event(request.user, owner, 'create_owner')
         return Response(UserSummarySerializer(owner).data, status=status.HTTP_201_CREATED)
 
 
@@ -94,12 +96,10 @@ class AdminUserDetailView(APIView):
             if role not in {
                 User.Role.ADMIN,
                 User.Role.OWNER,
-                User.Role.FARMER,
                 User.Role.WORKER,
-                User.Role.EXPERT,
             }:
                 return Response(
-                    {'role': 'Choose admin, farmer, or expert.'},
+                    {'role': 'Choose admin, owner, or worker.'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             user.role = role
@@ -113,6 +113,7 @@ class AdminUserDetailView(APIView):
             user.is_active = is_active
 
         user.save()
+        record_event(request.user, user, 'update_role' if role is not None else 'update')
 
         return Response({
             'id': user.id,
@@ -130,8 +131,87 @@ class AdminUserDetailView(APIView):
 class AdminAuditView(APIView):
     permission_classes = [IsAdmin]
 
+    def _summary(self, event):
+        action_labels = {
+            'create': 'Created',
+            'update': 'Updated',
+            'delete': 'Deleted',
+            'create_owner': 'Created owner account',
+            'create_worker': 'Created worker account',
+            'assign': 'Assigned field worker',
+            'share': 'Shared farm access',
+            'unshare': 'Removed farm access',
+            'update_role': 'Changed user role',
+            'login': 'Signed in',
+            'logout': 'Signed out',
+            'profile_update': 'Updated profile',
+            'weather_update': 'Updated weather configuration',
+            'chat_create': 'Created AI chat',
+            'chat_update': 'Renamed AI chat',
+            'chat_delete': 'Deleted AI chat',
+            'chat_message': 'Sent AI chat message',
+            'disease_predict': 'Ran disease prediction',
+            'yield_predict': 'Ran yield prediction',
+            'generate': 'Generated recommendation',
+            'accept': 'Accepted recommendation',
+            'refuse': 'Refused recommendation',
+        }
+        entity_labels = {
+            'accounts.User': 'user',
+            'activities.Activity': 'activity',
+            'ai_chat.ChatConversation': 'conversation',
+            'ai_chat.ChatMessage': 'chat message',
+            'crops.CropCycle': 'planting',
+            'crops.CropType': 'crop reference',
+            'farms.Farm': 'farm',
+            'farms.Field': 'field',
+            'farms.FieldAssignment': 'field assignment',
+            'farms.FarmMembership': 'farm access',
+            'predictions.PredictionRecord': 'prediction',
+            'recommendations.Recommendation': 'recommendation',
+            'weather.WeatherConfiguration': 'weather settings',
+        }
+        actor = event.actor.username if event.actor else 'System'
+        action = action_labels.get(event.action, event.action.replace('_', ' ').title())
+        entity = entity_labels.get(event.entity, event.entity.split('.')[-1])
+
+        label = ''
+        try:
+            app_label, model_name = event.entity.split('.', 1)
+            from django.apps import apps
+            model = apps.get_model(app_label, model_name)
+            obj = model.objects.filter(pk=event.object_id).first()
+            if obj:
+                for attr in ('username', 'name', 'title', 'variety', 'notes'):
+                    value = getattr(obj, attr, None)
+                    if isinstance(value, str) and value.strip():
+                        label = f' "{value.strip()}"'
+                        break
+        except (ValueError, LookupError):
+            pass
+
+        return f'{actor} {action.lower()} {entity}{label}'
+
     def get(self, request):
-        events = AuditEvent.objects.select_related('actor')[:100]
+        events = AuditEvent.objects.select_related('actor')
+        action = request.query_params.get('action', '').strip()
+        actor = request.query_params.get('actor', '').strip()
+        entity = request.query_params.get('entity', '').strip()
+        start = request.query_params.get('start', '').strip()
+        end = request.query_params.get('end', '').strip()
+
+        if action:
+            events = events.filter(action__icontains=action)
+        if actor:
+            events = events.filter(actor__username__icontains=actor)
+        if entity:
+            events = events.filter(entity__icontains=entity)
+        if start:
+            events = events.filter(recorded_at__date__gte=start)
+        if end:
+            events = events.filter(recorded_at__date__lte=end)
+
+        events = events[:100]
         return Response([
             {
                 'id': event.id,
@@ -140,6 +220,7 @@ class AdminAuditView(APIView):
                 'entity': event.entity,
                 'object_id': event.object_id,
                 'recorded_at': event.recorded_at,
+                'summary': self._summary(event),
             }
             for event in events
         ])
@@ -156,12 +237,24 @@ class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
     throttle_scope = 'auth'
 
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            user = User.objects.filter(username=request.data.get('username')).first()
+            if user:
+                record_event(user, user, 'login')
+        return response
+
 
 class MeView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
 
     def get_object(self):
         return self.request.user
+
+    def perform_update(self, serializer):
+        user = serializer.save()
+        record_event(self.request.user, user, 'profile_update')
 
 
 class LogoutView(APIView):
@@ -171,6 +264,7 @@ class LogoutView(APIView):
             if str(token['user_id']) != str(request.user.pk):
                 return Response({'detail': 'This token belongs to another account.'}, status=403)
             token.blacklist()
+            record_event(request.user, request.user, 'logout')
         except TokenError:
             return Response({'detail': 'Invalid or expired refresh token.'}, status=400)
         return Response(status=status.HTTP_204_NO_CONTENT)

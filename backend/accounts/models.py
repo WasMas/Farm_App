@@ -6,12 +6,10 @@ class User(AbstractUser):
     class Role(models.TextChoices):
         ADMIN = 'admin', 'Administrator'
         OWNER = 'owner', 'Farm owner'
-        FARMER = 'farmer', 'Farmer'
         WORKER = 'worker', 'Farm worker'
-        EXPERT = 'expert', 'Agricultural expert'
 
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=12, choices=Role, default=Role.FARMER)
+    role = models.CharField(max_length=12, choices=Role, default=Role.OWNER)
 
     bio = models.TextField(max_length=500, blank=True, default='')
 
