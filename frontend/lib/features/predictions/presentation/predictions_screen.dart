@@ -268,7 +268,7 @@ class PredictionsScreen extends ConsumerWidget {
                     value: (probability as num).toDouble().clamp(0.0, 1.0),
                   ),
                 ],
-                if (result['disclaimer'] != null) ...[
+                if ((result['disclaimer']?.toString() ?? '').trim().isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(result['disclaimer'].toString()),
                 ],

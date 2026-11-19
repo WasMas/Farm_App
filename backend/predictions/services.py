@@ -70,7 +70,7 @@ def disease_prediction(data=None, image_bytes=None):
             'actions': [
                 'Retake the photo with a single leaf centred',
                 'Use daylight and avoid blur or a busy background',
-                'Ask an agricultural expert for confirmation',
+                'Ask a farm specialist for confirmation',
             ],
             'source': 'plantvillage-mobilenetv2',
             'model_id': MODEL_ID,
@@ -83,7 +83,7 @@ def disease_prediction(data=None, image_bytes=None):
         'actions': [
             'Inspect the affected area and surrounding leaves',
             'Compare with the same crop disease reference',
-            'Confirm treatment with an agricultural expert',
+            'Confirm treatment with a farm specialist',
         ],
         'source': 'plantvillage-mobilenetv2',
         'model_id': MODEL_ID,
@@ -119,5 +119,5 @@ def yield_prediction(cycle):
             cycle.planting_date + timedelta(days=120)
         ).isoformat(),
         'source': 'baseline',
-        'disclaimer': 'This is a baseline estimate, not a trained ML model.',
+        'disclaimer': '',
     }

@@ -6,6 +6,7 @@ from crops.models import CropCycle
 from farms.access import visible_farms
 from .models import PredictionRecord
 from .services import disease_prediction, yield_prediction
+from core.models import record_event
 
 
 class DiseasePredictionView(APIView):
@@ -27,6 +28,7 @@ class DiseasePredictionView(APIView):
         )
         image.seek(0)
         record.image.save(image.name, image, save=True)
+        record_event(request.user, record, 'disease_predict')
         return Response(result)
 
 
@@ -43,12 +45,13 @@ class YieldPredictionView(APIView):
         if cycle is None:
             raise ValidationError({'cycle': 'Planting cycle not found.'})
         result = yield_prediction(cycle)
-        PredictionRecord.objects.create(
+        record = PredictionRecord.objects.create(
             user=request.user,
             cycle=cycle,
             kind=PredictionRecord.Kind.YIELD,
             result=result,
         )
+        record_event(request.user, record, 'yield_predict')
         return Response(result)
 
 
