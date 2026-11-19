@@ -17,6 +17,7 @@ from .serializers import (
 )
 
 from .services.gemini_service import generate_gemini_reply
+from core.models import record_event
 
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,8 @@ class ChatConversationListCreateView(generics.ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        conversation = serializer.save(user=self.request.user)
+        record_event(self.request.user, conversation, 'chat_create')
 
 
 class ChatConversationDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -43,6 +45,14 @@ class ChatConversationDetailView(generics.RetrieveUpdateDestroyAPIView):
         return ChatConversation.objects.filter(
             user=self.request.user
         )
+
+    def perform_update(self, serializer):
+        conversation = serializer.save()
+        record_event(self.request.user, conversation, 'chat_update')
+
+    def perform_destroy(self, instance):
+        record_event(self.request.user, instance, 'chat_delete')
+        instance.delete()
 
 
 class ChatMessageListCreateView(generics.ListCreateAPIView):
@@ -78,6 +88,7 @@ class ChatMessageListCreateView(generics.ListCreateAPIView):
         )
 
         conversation.save(update_fields=['updated_at'])
+        record_event(request.user, user_message, 'chat_message')
 
         # Retrieve up to 12 previous messages.
         history = list(

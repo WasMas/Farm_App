@@ -4,7 +4,7 @@ from django.db import models
 
 class AuditEvent(models.Model):
     actor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
-    action = models.CharField(max_length=12)
+    action = models.CharField(max_length=32)
     entity = models.CharField(max_length=80)
     object_id = models.PositiveBigIntegerField()
     recorded_at = models.DateTimeField(auto_now_add=True)

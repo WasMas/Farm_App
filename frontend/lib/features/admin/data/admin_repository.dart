@@ -27,8 +27,24 @@ class AdminRepository {
     return Map<String, dynamic>.from(response.data as Map);
   }
 
-  Future<List<Map<String, dynamic>>> audit() async =>
-      ((await dio.get('admin/audit/')).data as List)
+  Future<List<Map<String, dynamic>>> audit({
+    String? action,
+    String? actor,
+    String? entity,
+    String? start,
+    String? end,
+  }) async =>
+      ((await dio.get(
+                'admin/audit/',
+                queryParameters: {
+                  if (action?.trim().isNotEmpty == true) 'action': action,
+                  if (actor?.trim().isNotEmpty == true) 'actor': actor,
+                  if (entity?.trim().isNotEmpty == true) 'entity': entity,
+                  if (start?.trim().isNotEmpty == true) 'start': start,
+                  if (end?.trim().isNotEmpty == true) 'end': end,
+                },
+              )).data
+              as List)
           .map((item) => Map<String, dynamic>.from(item as Map))
           .toList();
 }

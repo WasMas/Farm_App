@@ -6,6 +6,7 @@ from farms.access import visible_farms
 from .models import WeatherConfiguration
 from .serializers import WeatherConfigurationSerializer, WeatherQuery
 from .services import weather_for
+from core.models import record_event
 
 
 class WeatherConfigurationView(generics.RetrieveUpdateAPIView):
@@ -13,6 +14,10 @@ class WeatherConfigurationView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return WeatherConfiguration.objects.get_or_create(user=self.request.user)[0]
+
+    def perform_update(self, serializer):
+        config = serializer.save()
+        record_event(self.request.user, config, 'weather_update')
 
 
 class WeatherView(APIView):
