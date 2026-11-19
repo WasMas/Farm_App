@@ -54,7 +54,7 @@ class HomeScreen extends ConsumerWidget {
                           recordWork(context, ref);
                         }
                       },
-                      canRecord: user?.role != 'expert',
+                      canRecord: user?.role != 'worker',
                     ),
                     const SizedBox(height: 24),
                     _SummaryFigures(summary),

@@ -26,7 +26,7 @@ class _ActivitiesScreenState extends ConsumerState<ActivitiesScreen> {
         PageHeading(
           'The day’s work.',
           'Small observations. A lasting record.',
-          action: ref.watch(authProvider).asData?.value?.role == 'expert'
+          action: ref.watch(authProvider).asData?.value?.role == 'worker'
               ? null
               : FilledButton.icon(
                   onPressed: () => recordWork(context, ref),

@@ -24,7 +24,7 @@ class _CropsScreenState extends ConsumerState<CropsScreen> {
       PageHeading(
         'Seasons of growth.',
         'A new planting, a fresh page. Past seasons stay in your journal.',
-        action: ref.watch(authProvider).asData?.value?.role == 'expert'
+        action: ref.watch(authProvider).asData?.value?.role == 'worker'
             ? null
             : FilledButton.icon(
                 onPressed: () => editCycle(context, ref),
