@@ -91,15 +91,6 @@ class Command(BaseCommand):
             User.Role.WORKER,
             'South field worker',
         )
-        expert = self._create_user(
-            'demo_expert',
-            'expert@fieldbook.demo',
-            'Karim',
-            'Mansour',
-            User.Role.EXPERT,
-            'Agricultural expert',
-        )
-
         farm = Farm.objects.create(
             owner=owner,
             name='Green Valley Farm',
@@ -163,11 +154,6 @@ class Command(BaseCommand):
             farm=farm,
             user=south_worker,
             role=FarmMembership.Role.WORKER,
-        )
-        FarmMembership.objects.create(
-            farm=farm,
-            user=expert,
-            role=FarmMembership.Role.VIEWER,
         )
 
         tomato = self._upsert_crop(
@@ -309,6 +295,31 @@ class Command(BaseCommand):
             },
         )
 
+        seed_audit = [
+            (owner, 'create', farm._meta.label, farm.pk, 15),
+            (owner, 'create', north._meta.label, north.pk, 14),
+            (owner, 'create', greenhouse._meta.label, greenhouse.pk, 13),
+            (owner, 'create', olive._meta.label, olive.pk, 12),
+            (owner, 'create', wheat._meta.label, wheat.pk, 11),
+            (owner, 'create_worker', north_worker._meta.label, north_worker.pk, 10),
+            (owner, 'create_worker', south_worker._meta.label, south_worker.pk, 9),
+            (owner, 'assign', north._meta.label, north.pk, 8),
+            (owner, 'assign', olive._meta.label, olive.pk, 7),
+            (north_worker, 'create', tomato_cycle._meta.label, tomato_cycle.pk, 6),
+            (north_worker, 'create', pepper_cycle._meta.label, pepper_cycle.pk, 5),
+            (north_worker, 'create', 'activities.Activity', Activity.objects.first().pk if Activity.objects.exists() else 0, 4),
+            (owner, 'accept', tomato_cycle._meta.label, tomato_cycle.pk, 2),
+        ]
+        for actor, action, entity, object_id, hours in seed_audit:
+            event = AuditEvent.objects.create(
+                actor=actor,
+                action=action,
+                entity=entity,
+                object_id=object_id or 1,
+            )
+            event.recorded_at = timezone.now() - timedelta(hours=hours)
+            event.save(update_fields=['recorded_at'])
+
         conversation = ChatConversation.objects.create(
             user=owner,
             title='Tomato flowering questions',
@@ -368,7 +379,7 @@ class Command(BaseCommand):
                     'actions': [
                         'Inspect affected leaves and lower stems',
                         'Remove severely damaged leaves',
-                        'Confirm treatment with an agricultural expert',
+                        'Confirm treatment with a farm specialist',
                     ],
                     'source': 'plantvillage-mobilenetv2',
                     'model_id': 'LourivalGontijo/plantvillage-mobilenetv2',
@@ -384,7 +395,7 @@ class Command(BaseCommand):
             )
         )
         self.stdout.write(
-            'Login accounts: demo_owner, demo_north, demo_south, demo_expert'
+            'Login accounts: demo_owner, demo_north, demo_south'
         )
         self.stdout.write(f'Demo password: {DEMO_PASSWORD}')
 
