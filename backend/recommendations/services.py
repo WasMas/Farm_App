@@ -5,13 +5,14 @@ from django.db import transaction
 from django.conf import settings
 from django.utils import timezone
 from google import genai
+from rest_framework.exceptions import ValidationError
 
 from activities.models import Activity
 from crops.models import CropCycle
-from farms.access import visible_farms
 from weather.models import WeatherConfiguration
 from weather.services import weather_for
 from .models import Recommendation
+from core.models import record_event
 
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,25 @@ STAGES = [
     CropCycle.Stage.MATURE,
     CropCycle.Stage.HARVEST,
 ]
+
+
+def visible_recommendation_cycles(user, active_only=True):
+    cycles = CropCycle.objects.all()
+    if active_only:
+        cycles = cycles.filter(status=CropCycle.Status.ACTIVE)
+
+    if user.is_superuser or user.is_staff or getattr(user, 'role', None) == 'admin':
+        return cycles.select_related('crop_type', 'field__farm')
+    if getattr(user, 'role', None) == 'worker':
+        return cycles.filter(field__assignments__worker=user).distinct().select_related(
+            'crop_type',
+            'field__farm',
+        )
+    if getattr(user, 'role', None) == 'owner':
+        return cycles.filter(
+            field__farm__owner=user,
+        ).select_related('crop_type', 'field__farm')
+    return cycles.none()
 
 
 def _next_stage(cycle):
@@ -140,6 +160,12 @@ def _stage_recommendation(cycle, as_of):
 def _irrigation_recommendation(cycle, as_of):
     last = cycle.activities.filter(kind=Activity.Kind.IRRIGATION).order_by('-date').first()
     last_date = last.date if last else cycle.planting_date
+    latest = Recommendation.objects.filter(
+        cycle=cycle,
+        kind=Recommendation.Kind.IRRIGATION,
+    ).order_by('-due_date').first()
+    if latest and latest.due_date > last_date:
+        last_date = latest.due_date
     irrigation_interval = 3 if cycle.field.soil_type in {'sandy', 'silt'} else 6
     due_date = last_date + timedelta(days=irrigation_interval)
     if due_date > as_of:
@@ -171,6 +197,12 @@ def _fertilization_recommendation(cycle, as_of):
         kind=Activity.Kind.FERTILIZATION,
     ).order_by('-date').first()
     last_date = last.date if last else cycle.planting_date
+    latest = Recommendation.objects.filter(
+        cycle=cycle,
+        kind=Recommendation.Kind.FERTILIZATION,
+    ).order_by('-due_date').first()
+    if latest and latest.due_date > last_date:
+        last_date = latest.due_date
     if cycle.current_stage not in {
         CropCycle.Stage.VEGETATIVE,
         CropCycle.Stage.FLOWERING,
@@ -204,10 +236,7 @@ def _fertilization_recommendation(cycle, as_of):
 @transaction.atomic
 def generate_recommendations(user, as_of=None, use_ai=False):
     as_of = as_of or timezone.localdate()
-    cycles = CropCycle.objects.filter(
-        field__farm__in=visible_farms(user),
-        status=CropCycle.Status.ACTIVE,
-    ).select_related('crop_type', 'field__farm')
+    cycles = visible_recommendation_cycles(user, active_only=True)
     created = []
     for cycle in cycles:
         for proposal in (
@@ -229,15 +258,25 @@ def generate_recommendations(user, as_of=None, use_ai=False):
 
 
 @transaction.atomic
-def decide_recommendation(recommendation, user, accepted):
+def decide_recommendation(recommendation, user, accepted, effective_date=None):
     if recommendation.status != Recommendation.Status.PENDING:
         return recommendation
+    effective_date = effective_date or timezone.localdate()
+    if accepted and recommendation.due_date > effective_date:
+        raise ValidationError(
+            {'detail': 'This recommendation has not reached its due date.'}
+        )
     recommendation.status = (
         Recommendation.Status.ACCEPTED if accepted else Recommendation.Status.REFUSED
     )
     recommendation.decided_by = user
     recommendation.decided_at = timezone.now()
     recommendation.save(update_fields=['status', 'decided_by', 'decided_at'])
+    record_event(
+        user,
+        recommendation,
+        'accept' if accepted else 'refuse',
+    )
     if accepted:
         if recommendation.proposed_stage:
             recommendation.cycle.current_stage = recommendation.proposed_stage

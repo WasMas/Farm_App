@@ -6,11 +6,16 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from farms.access import can_manage, can_work_field, visible_farms
+from farms.access import can_manage, can_work_field
 from accounts.models import User
 from .models import Recommendation
 from .serializers import RecommendationSerializer
-from .services import decide_recommendation, generate_recommendations
+from .services import (
+    decide_recommendation,
+    generate_recommendations,
+    visible_recommendation_cycles,
+)
+from core.models import record_event
 
 
 def _visible_recommendation(user, pk):
@@ -26,12 +31,9 @@ def _visible_recommendation(user, pk):
 class RecommendationListView(APIView):
     def get(self, request):
         recommendations = Recommendation.objects.filter(
-            cycle__field__farm__in=visible_farms(request.user)
+            cycle__in=visible_recommendation_cycles(request.user, active_only=False)
         ).select_related('cycle__field__farm', 'cycle__crop_type', 'decided_by')
-        if request.user.role == User.Role.WORKER:
-            recommendations = recommendations.filter(
-                cycle__field__assignments__worker=request.user
-            )
+        recommendations = recommendations.order_by('due_date', 'created_at', 'id')
         return Response(RecommendationSerializer(recommendations, many=True).data)
 
     def post(self, request):
@@ -44,6 +46,8 @@ class RecommendationListView(APIView):
         if not isinstance(use_ai, bool):
             raise ValidationError({'use_ai': 'Use true or false.'})
         created = generate_recommendations(request.user, parsed_date, use_ai=use_ai)
+        for recommendation in created:
+            record_event(request.user, recommendation, 'generate')
         return Response(RecommendationSerializer(created, many=True).data, status=status.HTTP_201_CREATED)
 
 
@@ -54,5 +58,16 @@ class RecommendationDecisionView(APIView):
             raise PermissionDenied('Only the farm owner or a manager may decide recommendations.')
         if decision not in {'accept', 'refuse'}:
             raise ValidationError({'decision': 'Choose accept or refuse.'})
-        updated = decide_recommendation(recommendation, request.user, decision == 'accept')
+        effective_date = request.data.get('as_of')
+        if effective_date:
+            try:
+                effective_date = date.fromisoformat(effective_date)
+            except ValueError as exc:
+                raise ValidationError({'as_of': 'Use YYYY-MM-DD.'}) from exc
+        updated = decide_recommendation(
+            recommendation,
+            request.user,
+            decision == 'accept',
+            effective_date,
+        )
         return Response(RecommendationSerializer(updated).data)

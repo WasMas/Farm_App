@@ -24,9 +24,18 @@ class RecommendationRepository {
         .toList();
   }
 
-  Future<Map<String, dynamic>> decide(int id, bool accept) async =>
+  Future<Map<String, dynamic>> decide(
+    int id,
+    bool accept, {
+    DateTime? effectiveDate,
+  }) async =>
       Map<String, dynamic>.from(
-        (await dio.post('recommendations/$id/${accept ? 'accept' : 'refuse'}/'))
+        (await dio.post(
+          'recommendations/$id/${accept ? 'accept' : 'refuse'}/',
+          data: {
+            if (effectiveDate != null) 'as_of': _date(effectiveDate),
+          },
+        ))
             .data as Map,
       );
 

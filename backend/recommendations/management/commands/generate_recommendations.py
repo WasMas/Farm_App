@@ -19,7 +19,7 @@ class Command(BaseCommand):
         total = 0
         for owner in User.objects.filter(
             is_active=True,
-            role__in=[User.Role.OWNER, User.Role.FARMER],
+            role=User.Role.OWNER,
         ):
             total += len(
                 generate_recommendations(owner, as_of, use_ai=options['use_ai'])
