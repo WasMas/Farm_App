@@ -108,3 +108,5 @@ $zapJar = Join-Path $env:TEMP 'farm-zap-tool\ZAP_2.17.0\zap-2.17.0.jar'
 ```
 
 **TP4 — correction et retest.** Ouvrir la ligne SCA dans la [matrice](traceability.md) : montrer le premier contrôle de dépendances en échec, la mise à jour de setuptools, puis le contrôle réussi sur GitHub.
+
+**ZAP sur GitHub.** Dans Actions → Farm_App quality, ouvrir une exécution puis sa page Summary. Le tableau **Farm_App passive ZAP findings** affiche la gravité, la règle, l’alerte et la route. Le job **OWASP ZAP passive scan** exécute le parcours sur une base jetable. Le rapport JSON de cette exécution se télécharge dans **Artifacts → zap-passive**.

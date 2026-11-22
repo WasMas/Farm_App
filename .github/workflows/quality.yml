@@ -102,3 +102,60 @@ jobs:
           name: flutter-quality
           path: frontend/widgets.txt
 
+
+  zap:
+    name: OWASP ZAP passive scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ci-only
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: '5432'
+      DB_USER: postgres
+      DB_PASSWORD: ci-only
+      DJANGO_SECRET_KEY: disposable-runner-key-used-only-with-local-test-fixtures
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.0'
+          cache: true
+      - name: Install demo and browser dependencies
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r backend/requirements.txt -r scripts/quality-requirements.txt
+          python -m playwright install --with-deps chromium
+      - name: Verify and unpack ZAP
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl --fail --location --retry 3 -o zap.zip https://github.com/zaproxy/zaproxy/releases/download/v2.17.0/ZAP_2.17.0_Crossplatform.zip
+          echo '94c8f767b1c2e94f0db66b3ae56514d5e3f5a728ee1b6c798e0c8fe2d61fbff0  zap.zip' | sha256sum --check
+          unzip -q zap.zip
+      - name: Observe owner sign-in, dashboard and activity search
+        run: |
+          python scripts/demo.py --passive-zap "$RUNNER_TEMP/ZAP_2.17.0/zap-2.17.0.jar"
+          cp docs/quality/evidence/zap-passive.json "$RUNNER_TEMP/zap-passive.json"
+      - name: Show alerts in the run summary
+        run: |
+          {
+            echo '### Farm_App passive ZAP findings'
+            jq -r '"Observed API routes: " + (.observed_api_paths | join(", ")) + ". Alert instances: " + (.alert_instances | tostring) + "."' "$RUNNER_TEMP/zap-passive.json"
+            echo
+            echo '| Risk | Rule | Alert | API route |'
+            echo '|---|---|---|---|'
+            jq -r '.findings[] | "| \(.risk) | \(.rule) | \(.alert) | \(.path) |"' "$RUNNER_TEMP/zap-passive.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zap-passive
+          path: ${{ runner.temp }}/zap-passive.json
+          if-no-files-found: error
