@@ -69,7 +69,29 @@ try {
 
 Dans **Inspector**, cliquer sur **Step over** pour avancer, ou **Resume ▶** pour continuer. Chercher `keyboard login and audit row verified` pour chaque navigateur, puis `OK`.
 
-## 5 · Autres commandes si le jury demande
+## 5 · Diapo 6 · Montrer les alertes ZAP
+
+**Pendant la soutenance** — afficher le rapport déjà enregistré :
+
+```powershell
+cd D:\Farm_App
+$zap = Get-Content docs/quality/evidence/zap-passive.json -Raw | ConvertFrom-Json   # Ouvre le rapport.
+$zap.findings | Format-Table risk,rule,path,alert -Wrap   # Affiche les alertes par route.
+```
+
+Montrer la règle **10036** : quatre réponses de l’API révèlent la version du serveur dans l’en-tête `Server`. Le rapport contient aussi deux alertes informatives. [Résultat du job ZAP sur GitHub](https://github.com/WasMas/Farm_App/actions/runs/45043679144/job/137275114891).
+
+**Avant la soutenance** — pour refaire le scan passif et remplacer le rapport local :
+
+```powershell
+cd D:\Farm_App
+$jar = Join-Path $env:TEMP 'farm-zap-tool\ZAP_2.17.0\zap-2.17.0.jar'   # Localise ZAP sur ce PC.
+.\.venv\Scripts\python.exe scripts/demo.py --passive-zap $jar   # Observe la connexion, le tableau de bord et la recherche dans Flutter.
+```
+
+Le script démarre sa propre démo. PostgreSQL doit tourner et les ports **8091** et **18000** doivent être libres. Relancer le premier bloc pour afficher le nouveau résultat.
+
+## 6 · Autres commandes si le jury demande
 
 Depuis un terminal PowerShell, initialiser ces deux lignes une fois :
 
@@ -109,13 +131,6 @@ $py = (Resolve-Path .\.venv\Scripts\python.exe).Path   # Utilise le Python du pr
 > & $py scripts/audit_pub.py   # Vérifie les paquets Dart auprès d’OSV (nécessite PyYAML).
 > & $py -m radon cc backend -s -n C   # Liste les fonctions Python de complexité C ou plus.
 > & $py scripts/test_backend.py core.quality_live.LiveQualityTests.test_unauthenticated_http_response -v 2   # Vérifie le refus HTTP 401 et les en-têtes.
-> $zap = Get-Content docs/quality/evidence/zap-passive.json -Raw | ConvertFrom-Json   # Lit le rapport ZAP enregistré.
-> $zap.findings | Format-Table risk,rule,path,alert -Wrap   # Affiche gravité, règle, route et alerte.
-> ```
-> Pour régénérer le rapport avec Java et ZAP installés (remplace le JSON local) :
-> ```powershell
-> $jar = Join-Path $env:TEMP 'farm-zap-tool\ZAP_2.17.0\zap-2.17.0.jar'   # Localise le JAR extrait sur ce PC.
-> & $py scripts/demo.py --passive-zap $jar   # Observe le parcours Flutter avec ZAP passif.
 > ```
 > Pour mesurer aussi la couverture sur le PC :
 > ```powershell
