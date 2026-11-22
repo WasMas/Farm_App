@@ -1,0 +1,8 @@
+rules:
+  - id: dart-accept-all-tls-certificates
+    languages: [generic]
+    paths:
+      include: ["*.dart"]
+    severity: ERROR
+    message: This callback unconditionally accepts an untrusted TLS certificate.
+    pattern-regex: 'badCertificateCallback\s*=\s*\([^)]*\)\s*=>\s*true\b'

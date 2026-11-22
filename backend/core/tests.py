@@ -1,4 +1,4 @@
-from django.test import SimpleTestCase, TestCase
+from django.test import tag, SimpleTestCase, TestCase
 from rest_framework.exceptions import ValidationError
 from .query import positive_id
 from rest_framework.test import APIClient
@@ -11,6 +11,7 @@ class HealthTests(TestCase):
 
 
 
+@tag("unit")
 class FilterUnitTests(SimpleTestCase):
     def test_filter_identifier_must_be_positive(self):
         self.assertEqual(positive_id('42', 'farm'), 42)

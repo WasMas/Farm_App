@@ -5,7 +5,7 @@ from threading import Barrier, Event
 from time import monotonic, sleep
 
 from django.db import connection, connections
-from django.test import TransactionTestCase
+from django.test import tag, TransactionTestCase
 from django.utils.timezone import localdate
 from rest_framework.test import APIClient
 
@@ -14,6 +14,7 @@ from crops.models import CropCycle, CropType
 from farms.models import Farm, FarmMembership, Field
 
 
+@tag("reliability")
 class PlantingRaceTests(TransactionTestCase):
     def test_last_hectare(self):
         alice = User.objects.create_user('alice', 'alice@example.invalid')

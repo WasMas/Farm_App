@@ -73,7 +73,7 @@ $env:DB_POOL = '1'
 
 ## GitHub Actions
 
-Ouvrir le dépôt GitHub → **Actions** → **Farm_App quality** → choisir l’exécution du commit présenté. Les jobs **backend** et **flutter** s’exécutent en parallèle. Ouvrir les étapes pour expliquer un succès ou un échec. Dans **Artifacts**, télécharger **backend-quality** et **flutter-quality**. Le workflow se déclenche à chaque push vers **test_project**. L’option manuelle GitHub dépend de la présence du workflow sur la branche par défaut.
+Ouvrir le dépôt GitHub → **Actions** → **Farm_App quality** → choisir l’exécution du commit présenté. Le graphe progresse de gauche à droite : installation, tests unitaires, intégration et fiabilité, analyses statiques, puis tests dynamiques. Les jobs d’une même étape peuvent fonctionner en parallèle. Ouvrir les étapes pour expliquer un succès ou un échec. Dans **Artifacts**, choisir le rapport de la catégorie présentée, par exemple **reliability**, **coverage**, **zap-passive** ou **performance**. Le workflow se déclenche à chaque push vers **test_project**. L’option manuelle GitHub dépend de la présence du workflow sur la branche par défaut.
 
 Pour reproduire la suite Django standard sur ce PC: depuis la racine, exécuter ` .\.venv\Scripts\python scripts/test_backend.py -v 2`. Les trois tests de serveur réel sont dans la commande de variante ci-dessus. Les commandes de couverture, de complexité, d’analyse statique et d’analyse des dépendances figurent dans [quality.yml](../../.github/workflows/quality.yml).
 
@@ -109,4 +109,12 @@ $zapJar = Join-Path $env:TEMP 'farm-zap-tool\ZAP_2.17.0\zap-2.17.0.jar'
 
 **TP4 — correction et retest.** Ouvrir la ligne SCA dans la [matrice](traceability.md) : montrer le premier contrôle de dépendances en échec, la mise à jour de setuptools, puis le contrôle réussi sur GitHub.
 
-**ZAP sur GitHub.** Dans Actions → Farm_App quality, ouvrir une exécution puis sa page Summary. Le tableau **Farm_App passive ZAP findings** affiche la gravité, la règle, l’alerte et la route. Le job **OWASP ZAP passive scan** exécute le parcours sur une base jetable. Le rapport JSON de cette exécution se télécharge dans **Artifacts → zap-passive**.
+**ZAP sur GitHub.** Dans Actions → Farm_App quality, ouvrir une exécution puis sa page Summary. Le tableau **Farm_App passive ZAP findings** affiche la gravité, la règle, l’alerte et la route. Le job **DAST HTTP et ZAP passif** exécute le parcours sur une base jetable. Le rapport JSON de cette exécution se télécharge dans **Artifacts → zap-passive**.
+
+
+## Activer SonarQube Cloud gratuitement
+
+1. Se connecter à [SonarQube Cloud EU](https://sonarcloud.io) avec GitHub. Choisir une organisation sur le plan **Free**, un projet public pour Farm_App et la méthode d’analyse **GitHub Actions / CI**. Désactiver l’analyse automatique du projet si elle est active.
+2. Le plan Free analyse une branche principale. Utiliser **test_project** comme branche principale du **projet Sonar**. Vérifier ce nom dans la configuration du projet avant le premier push analysé. La branche par défaut du dépôt GitHub peut rester main. Utiliser le Quality Gate intégré **Sonar way**. [Limites des plans](https://docs.sonarsource.com/sonarqube-cloud/administering-sonarcloud/managing-subscription/subscription-plans)
+3. Copier les clés exactes de l’organisation et du projet depuis Sonar. Créer un jeton autorisé à analyser le projet. Dans GitHub → Settings → Secrets and variables → Actions, ajouter le secret **SONAR_TOKEN**, puis les variables **SONAR_ORGANIZATION** et **SONAR_PROJECT_KEY**. Ajouter la clé du projet en dernier : elle active le job. Conserver le jeton uniquement dans les secrets GitHub.
+4. Déclencher un push sur test_project. Le job Sonar récupère les rapports de couverture Python et Dart, analyse les deux sources et attend le verdict. Tant que la clé du projet manque, GitHub affiche **Skipped** pour Sonar et exécute les autres contrôles. Après activation, un échec de l’analyse ou du Quality Gate bloque les jobs dynamiques. Les PR externes et Dependabot ne reçoivent pas le jeton.

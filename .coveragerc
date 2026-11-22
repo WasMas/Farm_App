@@ -1,0 +1,9 @@
+[run]
+branch = True
+relative_files = True
+source = backend
+omit =
+    */migrations/*
+    */tests.py
+    */test_*.py
+    */quality_live.py

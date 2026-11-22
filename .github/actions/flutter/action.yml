@@ -1,0 +1,12 @@
+name: Install Flutter quality environment
+description: Resolve the committed dependency versions
+runs:
+  using: composite
+  steps:
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.50.0'
+        cache: true
+    - shell: bash
+      working-directory: frontend
+      run: flutter pub get --enforce-lockfile

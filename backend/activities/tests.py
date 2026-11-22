@@ -1,6 +1,6 @@
 from datetime import timedelta
 from django.utils import timezone
-from django.test import TestCase
+from django.test import tag, TestCase
 from rest_framework.test import APIClient
 from accounts.models import User
 from farms.models import Farm, Field, FarmMembership
@@ -39,6 +39,7 @@ class ActivityTests(TestCase):
         self.assertEqual(self.client.get('/api/activities/').data['count'], 1)
         self.assertEqual(self.client.post('/api/activities/', self.payload).status_code, 400)
 
+    @tag("reliability")
     def test_failed_audit_rolls_back_activity_and_retry_succeeds(self):
         from unittest.mock import patch
         from .models import Activity

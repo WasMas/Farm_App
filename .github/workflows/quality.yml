@@ -9,130 +9,312 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
+env:
+  DB_HOST: 127.0.0.1
+  DB_PORT: '5432'
+  DB_NAME: farm_app
+  DB_USER: postgres
+  DB_PASSWORD: ci-only
+  DJANGO_SECRET_KEY: disposable-runner-key-used-only-with-local-test-fixtures
+
 jobs:
-  backend:
+  django:
+    name: 1 · Installation Django et PostgreSQL
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 30
     services:
-      postgres:
+      postgres: &postgres
         image: postgres:17
         env:
           POSTGRES_PASSWORD: ci-only
           POSTGRES_DB: farm_app
         ports: ['5432:5432']
         options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      DB_NAME: farm_app
-      DB_USER: postgres
-      DB_PASSWORD: ci-only
-      DJANGO_SECRET_KEY: disposable-runner-key-used-only-with-local-test-fixtures
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.14'
-      - name: Install application and test tools
+      - uses: ./.github/actions/backend
+      - name: Migrations et santé HTTP
         run: |
-          python -m pip install --upgrade "setuptools>=84.1.0"
-          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install -r backend/requirements.txt -r scripts/quality-requirements.txt
-          python -m playwright install --with-deps chromium firefox
           mkdir -p reports
-      - name: Fresh Linux installation and PostgreSQL health
-        run: |
           python backend/manage.py migrate --noinput
           python backend/manage.py runserver 127.0.0.1:8000 --noreload > reports/server.txt 2>&1 &
           server=$!
           trap 'kill "$server"' EXIT
           curl --fail --retry 30 --retry-connrefused --retry-delay 1 http://127.0.0.1:8000/api/health/ > reports/health.json
-          python -c "import json; assert json.load(open('reports/health.json'))['database'] == 'postgresql'"
-      - name: Unit, API, integration and recovery
-        shell: bash
+          jq -e '.database == "postgresql"' reports/health.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installation
+          retention-days: 7
+          path: reports/
+  web:
+    name: 1 · Compilation Flutter Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/flutter
+      - name: Compiler le frontend
         run: |
-          set -o pipefail
-          coverage run --branch --source=backend backend/manage.py test accounts activities ai_chat core crops dashboard farms predictions recommendations weather -v 2 2>&1 | tee reports/tests.txt
-      - name: Browser, HTTP security and dashboard load tests
-        env:
-          DB_POOL: '1'
-        shell: bash
+          cd frontend
+          flutter build web --release --no-web-resources-cdn
+  unit:
+    name: 2 · Tests unitaires Python
+    needs: [django, web]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres: *postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/backend
+      - name: Exécuter les tests Django
         run: |
-          set -o pipefail
-          python scripts/test_backend.py core.quality_live -v 2 2>&1 | tee reports/live.txt
-      - name: Coverage and complexity
+          mkdir -p reports
+          coverage run --data-file=reports/covdata.unit backend/manage.py test accounts activities ai_chat core crops dashboard farms predictions recommendations weather --tag unit -v 2 2>&1 | tee reports/unit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit
+          retention-days: 7
+          path: reports/
+  components:
+    name: 2 · Tests unitaires Dart et widgets Flutter
+    needs: [django, web]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/flutter
+      - name: Tester les composants et mesurer la couverture
+        run: |
+          mkdir -p reports
+          cd frontend
+          flutter test --coverage --reporter expanded test/*unit_test.dart test/*widget_test.dart test/responsive_shell_test.dart 2>&1 | tee ../reports/widgets.txt
+          sed 's|^SF:lib/|SF:frontend/lib/|' coverage/lcov.info > ../reports/flutter.info
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: components
+          retention-days: 7
+          path: reports/
+  api:
+    name: 3 · API et intégration PostgreSQL
+    needs: [unit, components]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres: *postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/backend
+      - name: Exécuter les tests Django
+        run: |
+          mkdir -p reports
+          coverage run --data-file=reports/covdata.api backend/manage.py test accounts activities ai_chat core crops dashboard farms predictions recommendations weather --exclude-tag unit --exclude-tag reliability -v 2 2>&1 | tee reports/api.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api
+          retention-days: 7
+          path: reports/
+  reliability:
+    name: 3 · Fiabilité et concurrence
+    needs: [unit, components]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres: *postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/backend
+      - uses: ./.github/actions/flutter
+      - name: Transactions et reprise après échec
+        run: |
+          mkdir -p reports
+          coverage run --data-file=reports/covdata.reliability backend/manage.py test accounts activities ai_chat core crops dashboard farms predictions recommendations weather --tag reliability -v 2 2>&1 | tee reports/reliability.txt
+      - name: Récupération de session Flutter
+        run: |
+          cd frontend
+          flutter test --coverage --reporter expanded test/session_error_test.dart 2>&1 | tee ../reports/session.txt
+          sed 's|^SF:lib/|SF:frontend/lib/|' coverage/lcov.info > ../reports/session.info
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reliability
+          retention-days: 7
+          path: reports/
+  browser:
+    name: 3 · Parcours navigateur et compatibilité
+    needs: [unit, components]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres: *postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/backend
+      - name: Installer Chromium et Firefox
+        run: |
+          python -m playwright install --with-deps chromium firefox
+      - name: Exécuter les tests Django
+        run: |
+          mkdir -p reports
+          coverage run --data-file=reports/covdata.browser backend/manage.py test core.quality_live.LiveQualityTests.test_admin_audit_keyboard_journey -v 2 2>&1 | tee reports/browser.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser
+          retention-days: 7
+          path: reports/
+  sast:
+    name: 4 · SAST Python et Dart
+    needs: [api, reliability, browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/flutter
+      - name: Bandit et complexité Python
+        run: |
+          mkdir -p reports
+          pipx run --spec bandit==1.9.4 bandit -r backend -x tests.py,quality_live.py,migrations,seed_demo.py -ll --exit-zero -f json -o reports/bandit.json
+          jq -e '[.results[] | select(.issue_severity == "HIGH")] | length == 0' reports/bandit.json
+          pipx run --spec radon==6.0.1 radon cc backend -s -n C -a > reports/complexity.txt
+      - name: Contrôle TLS Dart et analyse du frontend
         if: always()
         run: |
-          radon cc backend -s -n C -a > reports/complexity.txt
-          coverage report --omit='*/migrations/*,*/tests.py,*/quality_live.py' > reports/coverage.txt
-      - name: Static application security scan
+          mkdir -p reports
+          docker run --rm -v "$PWD:/src" -w /src semgrep/semgrep:1.125.0 semgrep scan --config .github/dart-security.yml --metrics=off --error --json frontend/lib > reports/dart-security.json
+          cd frontend
+          flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings lib 2>&1 | tee ../reports/flutter-analyze.txt
+      - uses: actions/upload-artifact@v4
         if: always()
-        run: bandit -r backend -x tests.py,quality_live.py,migrations,seed_demo.py -lll -f txt -o reports/bandit-high.txt && bandit -r backend -x tests.py,quality_live.py,migrations,seed_demo.py -ll --exit-zero -f txt -o reports/bandit-review.txt
-      - name: Installed Python dependencies
-        if: always()
+        with:
+          name: sast
+          retention-days: 7
+          path: reports/
+  sca:
+    name: 4 · SCA Python et dépendances Pub
+    needs: [api, reliability, browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/backend
+      - name: Audit Python avec pip-audit
         run: |
+          mkdir -p reports
           python -c "from importlib.metadata import version; print('torch==' + version('torch').split('+')[0])" > /tmp/torch-upstream.txt
           pip-audit --no-deps --disable-pip -r /tmp/torch-upstream.txt > reports/torch-upstream.txt 2>&1
           pip-audit --local --progress-spinner off > reports/dependencies.txt 2>&1
+      - name: Audit Dart avec OSV
+        if: always()
+        run: |
+          mkdir -p reports
+          python -m pip install PyYAML
+          python scripts/audit_pub.py | tee reports/pub-advisories.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: backend-quality
+          name: sca
+          retention-days: 7
           path: reports/
-  flutter:
+  coverage:
+    name: 4 · Rapports de couverture
+    needs: [api, reliability, browser]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: frontend
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - uses: actions/download-artifact@v4
         with:
-          flutter-version: '3.50.0'
-          cache: true
-      - run: flutter pub get --enforce-lockfile
-      - name: Widget tests
-        shell: bash
+          name: unit
+          retention-days: 7
+          path: reports/
+      - uses: actions/download-artifact@v4
+        with:
+          name: components
+          retention-days: 7
+          path: reports/
+      - uses: actions/download-artifact@v4
+        with:
+          name: api
+          retention-days: 7
+          path: reports/
+      - uses: actions/download-artifact@v4
+        with:
+          name: reliability
+          retention-days: 7
+          path: reports/
+      - uses: actions/download-artifact@v4
+        with:
+          name: browser
+          retention-days: 7
+          path: reports/
+      - name: Fusionner la couverture
         run: |
-          set -o pipefail
-          flutter test --reporter expanded test/*widget_test.dart test/responsive_shell_test.dart test/session_error_test.dart 2>&1 | tee widgets.txt
-      - run: flutter build web --release --no-web-resources-cdn
+          pipx run --spec coverage==7.17.4 coverage combine --data-file=reports/covdata reports
+          pipx run --spec coverage==7.17.4 coverage xml --data-file=reports/covdata -o reports/python.xml
+          pipx run --spec coverage==7.17.4 coverage report --data-file=reports/covdata | tee reports/coverage.txt
+          cat reports/session.info >> reports/flutter.info
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: flutter-quality
-          path: frontend/widgets.txt
-
-
-  zap:
-    name: OWASP ZAP passive scan
+          name: coverage
+          retention-days: 7
+          path: reports/
+  sonar:
+    name: 4 · SonarQube Quality Gate
+    needs: [coverage]
+    if: ${{ vars.SONAR_PROJECT_KEY != '' && (github.event_name != 'pull_request' || (github.base_ref == 'test_project' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_PASSWORD: ci-only
-        ports: ['5432:5432']
-        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      DB_HOST: 127.0.0.1
-      DB_PORT: '5432'
-      DB_USER: postgres
-      DB_PASSWORD: ci-only
-      DJANGO_SECRET_KEY: disposable-runner-key-used-only-with-local-test-fixtures
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
         with:
-          python-version: '3.14'
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.50.0'
-          cache: true
-      - name: Install demo and browser dependencies
+          fetch-depth: 0
+      - uses: ./.github/actions/flutter
+      - name: Préparer les sources Dart
         run: |
-          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install -r backend/requirements.txt -r scripts/quality-requirements.txt
+          cd frontend
+          flutter build web --release --no-web-resources-cdn
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          retention-days: 7
+          path: reports/
+      - name: Analyse Python et Dart et attente du verdict
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_HOST_URL: https://sonarcloud.io
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >-
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+  zap:
+    name: 5 · DAST HTTP et ZAP passif
+    needs: [sast, sca, coverage, sonar]
+    if: >-
+      ${{ !cancelled() && needs.sast.result == 'success' && needs.sca.result == 'success' &&
+          needs.coverage.result == 'success' && (needs.sonar.result == 'success' || needs.sonar.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres: *postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/backend
+      - uses: ./.github/actions/flutter
+      - name: Contrôler la réponse HTTP protégée
+        run: |
+          python scripts/test_backend.py core.quality_live.LiveQualityTests.test_unauthenticated_http_response -v 2
           python -m playwright install --with-deps chromium
       - name: Verify and unpack ZAP
         working-directory: ${{ runner.temp }}
@@ -159,3 +341,26 @@ jobs:
           name: zap-passive
           path: ${{ runner.temp }}/zap-passive.json
           if-no-files-found: error
+  performance:
+    name: 5 · Performance du tableau de bord
+    needs: [sast, sca, coverage, sonar]
+    if: >-
+      ${{ !cancelled() && needs.sast.result == 'success' && needs.sca.result == 'success' &&
+          needs.coverage.result == 'success' && (needs.sonar.result == 'success' || needs.sonar.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres: *postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/backend
+      - name: Mesurer la charge API
+        run: |
+          mkdir -p reports
+          DB_POOL=1 python scripts/test_backend.py core.quality_live.LiveQualityTests.test_dashboard_load -v 2 2>&1 | tee reports/load.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance
+          retention-days: 7
+          path: reports/

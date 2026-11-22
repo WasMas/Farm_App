@@ -3,7 +3,7 @@ from io import StringIO
 from unittest.mock import patch
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase
+from django.test import tag, TestCase
 from rest_framework.test import APIClient
 from .models import User
 
@@ -50,6 +50,7 @@ class AuthenticationTests(TestCase):
 
     @patch.dict(os.environ, {'INITIAL_ADMIN_USERNAME': 'rootfarm', 'INITIAL_ADMIN_EMAIL': 'root@example.com',
                              'INITIAL_ADMIN_PASSWORD': 'A-bootstrap-passphrase-802!'})
+    @tag("reliability")
     def test_bootstrap_is_idempotent_and_does_not_reset_password(self):
         call_command('ensure_admin', stdout=StringIO())
         user = User.objects.get(username='rootfarm')
