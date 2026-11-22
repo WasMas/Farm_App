@@ -7,7 +7,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v7
       id: python
       with:
         python-version: '3.14'
@@ -18,7 +18,7 @@ runs:
     - id: runtime
       shell: bash
       run: echo "image=${ImageOS}-${ImageVersion}" >> "$GITHUB_OUTPUT"
-    - uses: actions/cache/restore@v4
+    - uses: actions/cache/restore@v6
       id: env
       with:
         path: ${{ runner.temp }}/farm-venv
@@ -33,7 +33,7 @@ runs:
         python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
         python -m pip install -r backend/requirements.txt -r scripts/quality-requirements.txt
     - if: inputs.fresh == 'true' && steps.env.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v6
       with:
         path: ${{ runner.temp }}/farm-venv
         key: ${{ steps.env.outputs.cache-primary-key }}

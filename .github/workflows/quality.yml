@@ -35,7 +35,7 @@ jobs:
         ports: ['5432:5432']
         options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/backend
         with:
           fresh: true
@@ -48,7 +48,7 @@ jobs:
           trap 'kill "$server"' EXIT
           curl --fail --retry 30 --retry-connrefused --retry-delay 1 http://127.0.0.1:8000/api/health/ > reports/health.json
           jq -e '.database == "postgresql"' reports/health.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: installation
@@ -59,13 +59,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/flutter
       - name: Compiler le frontend
         run: |
           cd frontend
           flutter build web --release --no-web-resources-cdn --dart-define=API_BASE_URL=http://127.0.0.1:18000/api/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: flutter-web-ci
           path: frontend/build/web/
@@ -79,13 +79,13 @@ jobs:
     services:
       postgres: *postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/backend
       - name: Exécuter les tests Django
         run: |
           mkdir -p reports
           coverage run --data-file=reports/covdata.unit backend/manage.py test accounts activities ai_chat core crops dashboard farms predictions recommendations weather --tag unit -v 2 2>&1 | tee reports/unit.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: unit
@@ -97,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/flutter
       - name: Tester les composants et mesurer la couverture
         run: |
@@ -105,7 +105,7 @@ jobs:
           cd frontend
           flutter test --coverage --reporter expanded test/*unit_test.dart test/*widget_test.dart test/responsive_shell_test.dart 2>&1 | tee ../reports/widgets.txt
           sed 's|^SF:lib/|SF:frontend/lib/|' coverage/lcov.info > ../reports/flutter.info
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: components
@@ -119,13 +119,13 @@ jobs:
     services:
       postgres: *postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/backend
       - name: Exécuter les tests Django
         run: |
           mkdir -p reports
           coverage run --data-file=reports/covdata.api backend/manage.py test accounts activities ai_chat core crops dashboard farms predictions recommendations weather --exclude-tag unit --exclude-tag reliability -v 2 2>&1 | tee reports/api.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: api
@@ -139,7 +139,7 @@ jobs:
     services:
       postgres: *postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/backend
       - uses: ./.github/actions/flutter
       - name: Transactions et reprise après échec
@@ -151,7 +151,7 @@ jobs:
           cd frontend
           flutter test --coverage --reporter expanded test/session_error_test.dart 2>&1 | tee ../reports/session.txt
           sed 's|^SF:lib/|SF:frontend/lib/|' coverage/lcov.info > ../reports/session.info
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: reliability
@@ -165,7 +165,7 @@ jobs:
     services:
       postgres: *postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/backend
       - name: Installer Chromium et Firefox
         run: |
@@ -174,7 +174,7 @@ jobs:
         run: |
           mkdir -p reports
           coverage run --data-file=reports/covdata.browser backend/manage.py test core.quality_live.LiveQualityTests.test_admin_audit_keyboard_journey -v 2 2>&1 | tee reports/browser.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: browser
@@ -186,7 +186,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/flutter
       - name: Bandit et complexité Python
         run: |
@@ -201,7 +201,7 @@ jobs:
           docker run --rm -v "$PWD:/src" -w /src semgrep/semgrep:1.125.0 semgrep scan --config .github/dart-security.yml --metrics=off --error --json frontend/lib > reports/dart-security.json
           cd frontend
           flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings lib 2>&1 | tee ../reports/flutter-analyze.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: sast
@@ -213,7 +213,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/backend
       - name: Audit Python avec pip-audit
         run: |
@@ -227,7 +227,7 @@ jobs:
           mkdir -p reports
           python -m pip install PyYAML
           python scripts/audit_pub.py | tee reports/pub-advisories.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: sca
@@ -251,24 +251,24 @@ jobs:
           else
             echo 'configured=false' >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           name: unit
           path: reports/
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: components
           path: reports/
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: api
           path: reports/
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: reliability
           path: reports/
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: browser
           path: reports/
@@ -278,7 +278,7 @@ jobs:
           pipx run --spec coverage==7.17.4 coverage xml --data-file=reports/covdata -o reports/python.xml
           pipx run --spec coverage==7.17.4 coverage report --data-file=reports/covdata | tee reports/coverage.txt
           cat reports/session.info >> reports/flutter.info
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage
@@ -291,20 +291,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: ./.github/actions/flutter
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: flutter-web-ci
           path: frontend/build/web
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: coverage
           path: reports/
       - name: Analyse Python et Dart et attente du verdict
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarqube-scan-action@v8
         env:
           SONAR_HOST_URL: https://sonarcloud.io
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -323,9 +323,9 @@ jobs:
     services:
       postgres: *postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/backend
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: flutter-web-ci
           path: frontend/build/web
@@ -353,7 +353,7 @@ jobs:
             echo '|---|---|---|---|'
             jq -r '.findings[] | "| \(.risk) | \(.rule) | \(.alert) | \(.path) |"' "$RUNNER_TEMP/zap-passive.json"
           } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: zap-passive
           path: ${{ runner.temp }}/zap-passive.json
@@ -369,13 +369,13 @@ jobs:
     services:
       postgres: *postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/backend
       - name: Mesurer la charge API
         run: |
           mkdir -p reports
           DB_POOL=1 python scripts/test_backend.py core.quality_live.LiveQualityTests.test_dashboard_load -v 2 2>&1 | tee reports/load.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: performance
