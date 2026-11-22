@@ -101,15 +101,23 @@ def observe(jar, manage, env, root):
             for label, value in [('Username', 'demo_owner'), ('Password', 'FieldbookDemo123!')]:
                 field = page.get_by_role('textbox', name=label)
                 field.click()
+                expect(field).to_be_focused()
+                # Flutter can replace the editing element as it gains focus.
                 for attempt in range(3):
-                    field.fill(value)
+                    field.press('ControlOrMeta+a')
+                    page.keyboard.insert_text(value)
                     try:
-                        expect(field).to_have_value(value, timeout=1000)
+                        expect(field).to_have_value(value, timeout=1500)
                         break
                     except AssertionError:
                         if attempt == 2:
                             raise
-            page.get_by_role('textbox', name='Password').press('Enter')
+                        field.click()
+            with page.expect_response(lambda response: response.url == api + '/api/auth/login/'
+                                      and response.request.method == 'POST') as login:
+                page.get_by_role('button', name='Open my journal').click()
+            if login.value.status != 200:
+                raise RuntimeError(f'Demo sign-in returned HTTP {login.value.status}')
             page.get_by_role('button', name='All records').click()
             page.get_by_role('textbox').first.fill('Greenhouse drip irrigation')
             expect(page.get_by_text('Greenhouse drip irrigation', exact=False).or_(
