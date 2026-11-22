@@ -67,24 +67,24 @@ Connexion Flutter avec `demo_owner` et le mot de passe du jeu de démo `Fieldboo
 ### A3 · Ouvrir les preuves avant d’entrer
 
 - [ ] Ouvrir le [run de référence, 13 jobs réussis au commit 820fa5b](https://github.com/WasMas/Farm_App/actions/runs/45043679144), agrandir son graphe et repérer les artefacts sous **Summary**.
-- [ ] Ouvrir le [run du commit 21536c8](https://github.com/WasMas/Farm_App/actions/runs/45042016628) et le [bilan Sonar de test_project](https://sonarcloud.io/dashboard?id=WasMas_Farm_App&branch=test_project). Le 22 novembre, Sonar indiquait **0 % sur 9 nouvelles lignes à couvrir**, minimum **80 %**. DAST et performance ont donc été ignorés sur **ce** run. Après correction, le [verdict archivé de 820fa5b](https://sonarcloud.io/api/qualitygates/project_status?analysisId=41c251e2-92d0-4a39-b59a-055a8e0d5299) indique **100 %** pour le nouveau code. Le tableau Sonar en ligne évolue avec les analyses.
+- [ ] Ouvrir la [liste Issues de Farm_App](https://sonarcloud.io/project/issues?id=WasMas_Farm_App&branch=test_project&resolved=false). Sélectionner **test_project → All issues**. La capture intégrée conserve les deux premiers constats du 22 novembre.
 - [ ] Garder le PowerPoint, la [matrice des huit caractéristiques](traceability.md), le [rapport ZAP](evidence/zap-passive.json) et les [mesures locales](evidence/live.txt) disponibles hors ligne. Agrandir le texte du terminal.
 
 ## B · Les dix minutes, dans l’ordre des diapositives
 
-### B1 · 0:00–0:30 · Le métier
+### B1 · 0:00–0:25 · Le métier
 
 Diapo 1. « Fieldbook permet à un propriétaire et à ses ouvriers de suivre les travaux de la ferme. Nous allons enregistrer une observation, puis vérifier qui l’a créée et ce qui se passe si son audit échoue. » Montrer le tableau de bord connecté.
 
-### B2 · 0:30–2:25 · Enregistrer, retrouver, auditer
+### B2 · 0:25–1:55 · Enregistrer, retrouver, auditer
 
 Diapo 2, puis basculer sur Flutter. Sélectionner la ferme, cliquer sur **Record today’s work**, choisir **Observation**, une plantation active et la date du jour. Saisir **TEK-UP feuilles saines**, puis enregistrer. Aller à **All records** et rechercher **TEK-UP**. Dans l’onglet Django, actualiser. Lire sur la même ligne l’acteur, `create`, `activities.Activity`, l’identifiant et l’heure. L’audit concerne la modification métier. Les logs techniques du serveur servent au diagnostic. Si l’interface est indisponible, les captures de la diapo 2 illustrent les deux écrans.
 
-### B3 · 2:25–3:05 · Lire la pipeline
+### B3 · 1:55–2:40 · Deux unitaires et un parcours API
 
-Diapo 3. Montrer le graphe du run complet. Lire de gauche à droite les cinq catégories numérotées. Les jobs indépendants d’une même étape peuvent tourner en parallèle. La couverture alimente Sonar. Une dépendance requise en échec empêche les tests dynamiques de démarrer. Ouvrir un job, développer une étape, puis revenir à **Summary → Artifacts** pour le rapport.
+Diapo 3. Python accepte l’identifiant positif `42` et rejette `0`, `-2`, du texte et la valeur absente. Dart affiche la quantité `12.500` avec son unité sous la forme `12.5 m³`. Les deux tests passent. Le test d’intégration crée quatre objets liés, vérifie la modification de chacun, puis les supprime. Il observe 201 à la création, 200 à la modification, 204 à la suppression et 404 à la relecture. Il fait partie des 41 tests réussis du job API.
 
-### B4 · 3:05–5:20 · Deux couches de test en direct
+### B4 · 2:40–4:20 · Deux couches de test en direct
 
 **1. API et PostgreSQL.** Lancer au terminal 3. Pendant les migrations, expliquer que le test interrompt volontairement l’écriture de l’audit. Il vérifie zéro activité après l’échec, puis une seule activité et son audit après la nouvelle tentative.
 
@@ -93,7 +93,7 @@ Set-Location D:\Farm_App
 .\.venv\Scripts\python.exe scripts/test_backend.py activities.tests.ActivityTests.test_failed_audit_rolls_back_activity_and_retry_succeeds -v 2
 ```
 
-Montrer le nom du test, `Ran 1 test` et `OK`. **2. Composants Flutter.** Montrer les deux largeurs et `All tests passed!`. Le widget utilise des données de test et vérifie la recherche dans le journal.
+Montrer le nom du test, `Ran 1 test` et `OK`. **2. Composants Flutter.** Montrer les deux largeurs et `All tests passed!`. Le widget affiche une irrigation de 12,5 m³. Avec la recherche `unmatched`, il affiche « A fresh page » aux deux largeurs.
 
 ```powershell
 Set-Location D:\Farm_App\frontend
@@ -101,25 +101,35 @@ flutter test --no-pub --reporter expanded test/activities_widget_test.dart
 Set-Location ..
 ```
 
-### B5 · 5:20–6:10 · Deux demandes pour le dernier hectare
+### B5 · 4:20–5:00 · Deux demandes pour le dernier hectare
 
 Diapo 5. Deux personnes autorisées demandent chacune le dernier hectare. Le verrou pessimiste protège la parcelle dans PostgreSQL. La seconde transaction attend, puis relit la surface disponible. Résultat attendu, dans un ordre variable selon l’acteur : un **201**, un **400**, une plantation de **1 ha**. Le test vérifie aussi l’attente réelle sur verrou. Réserver la commande § C3 aux questions.
 
-### B6 · 6:10–7:10 · Ce que les trois contrôles de sécurité examinent
+### B6 · 5:00–5:50 · Ce que les trois contrôles de sécurité examinent
 
 Diapo 6. **SAST** lit le code, **SCA** compare les versions de dépendances aux avis publiés, **DAST passif** observe le trafic réel du parcours Flutter. Dans le JSON ZAP, repérer la règle **10036**, le risque **Low**, la route et le champ de réponse `Server`. Quatre occurrences concernent quatre routes du serveur local. Les deux autres alertes sont informatives. Le TP4 fournit aussi une correction vérifiable de setuptools et son retest (§ C4).
 
-### B7 · 7:10–8:10 · Du contrôle en échec au retest réussi
+### B7 · 5:50–6:40 · Ce que Sonar a enregistré
 
-Diapo 7. À gauche, montrer **21536c8** : aucune des neuf nouvelles lignes à couvrir ne figurait comme couverte. Les scripts de démo manquaient dans le rapport Python. À droite, montrer **820fa5b** : quatre tests de régression vérifient le choix du build Flutter et la CI inclut les scripts dans le rapport. Les **15 nouvelles lignes sur 15** sont couvertes, avec le même seuil de **80 %**. ZAP et performance ont ensuite réussi. Les **74 %** du rapport Python local archivé concernent un autre périmètre.
+Diapo 7. « GitHub lance le scanner Sonar à chaque push sur notre branche. Il examine les fichiers et publie ses constats dans Issues. Sur cette capture, la liste compte 19 constats ouverts. Le premier signale le mot de passe de démonstration dans `seed_demo.py`, ligne 408. Le deuxième recommande de fixer l’action référencée dans `quality.yml`, ligne 310, à un identifiant de commit complet. » Pointer le message, le statut **Open**, le niveau et la ligne. [Ouvrir la liste des issues](https://sonarcloud.io/project/issues?id=WasMas_Farm_App&branch=test_project&resolved=false).
 
-### B8 · 8:10–9:10 · Interpréter la charge
+### B8 · 6:40–7:25 · Interpréter la charge
 
 Diapo 8. « 20 propriétaires démarrent ensemble. Chacun envoie cinq lectures successives, donc 100 requêtes au total et au plus 20 en vol. » Pour ces 100 réponses triées, le p95 est la 95ᵉ durée. La mesure locale archivée passe de **3 781,3 ms** avant optimisation à **341,1 ms** après, pour une cible **strictement inférieure à 500 ms**. Petit jeu de 20 fermes sans activités. Sur le [runner GitHub de 820fa5b](https://github.com/WasMas/Farm_App/actions/runs/45043679144/job/137275114823), les 100 lectures ont réussi avec un p95 de **448,9 ms** et un débit de **71,2 requêtes/s**.
 
-### B9 · 9:10–10:00 · Revenir aux exigences
+### B9 · 7:25–9:30 · Présenter le pipeline après les exemples
 
-Diapo 9. Ouvrir la [matrice](traceability.md) sur une ligne choisie par le jury. Exemple : compatibilité → parcours admin au clavier → Playwright → Chromium et Firefox. Terminer sur la correction vérifiée : le Quality Gate a réussi, puis ZAP et le test de charge ont terminé avec succès. La mesure de charge porte sur le petit jeu de démonstration. À la fin, faire **Ctrl+C** dans le terminal 2 puis le terminal 1 si vous les avez démarrés pour cette démo. Le script Django supprime sa base jetable.
+Diapo 9. « GitHub rejoue ces vérifications à chaque push sur test_project. » Afficher le [graphe des 13 jobs](https://github.com/WasMas/Farm_App/actions/runs/45043679144). Dans PowerPoint, **Affichage → Notes** ou le **Mode Présentateur** affiche le texte à dire pour chacune des cinq étapes.
+
+1. **Installation et compilation (2 jobs).** Django démarre avec PostgreSQL et répond au contrôle de santé. Flutter produit le build web.
+2. **Unitaires et composants (2 jobs).** Python vérifie les petites règles et les options de démo. Flutter teste les données et les widgets.
+3. **Intégration et fiabilité (3 jobs).** L’API teste ses échanges avec PostgreSQL. La fiabilité couvre les pannes, le verrou et la session. Playwright vérifie le parcours admin dans deux navigateurs.
+4. **Analyses statiques (4 jobs).** SAST lit le code, SCA contrôle les dépendances, un job fusionne la couverture. Une fois celle-ci prête, Sonar lance son analyse et publie les constats.
+5. **Tests dynamiques (2 jobs).** ZAP observe le parcours Flutter. En parallèle, la charge mesure le tableau de bord. Montrer le journal d’un job ou ouvrir son rapport sous **Artifacts**.
+
+### B10 · 9:30–10:00 · Revenir aux exigences
+
+Diapo 10. Ouvrir la [matrice](traceability.md) sur une ligne choisie par le jury. Exemple : compatibilité → parcours admin au clavier → Playwright → Chromium et Firefox. Terminer sur les treize jobs réussis et les constats que le groupe peut examiner dans Sonar. La mesure de charge porte sur le petit jeu de démonstration. À la fin, faire **Ctrl+C** dans le terminal 2 puis le terminal 1 si vous les avez démarrés pour cette démo. Le script Django supprime sa base jetable.
 
 ## C · Répétition complète par catégorie
 
@@ -219,15 +229,15 @@ $dart = (Get-ChildItem test/*unit_test.dart,test/*widget_test.dart).FullName
 flutter test --no-pub --coverage --reporter expanded @dart test/responsive_shell_test.dart test/session_error_test.dart
 Get-Item coverage/lcov.info
 Pop-Location
-Start-Process 'https://sonarcloud.io/dashboard?id=WasMas_Farm_App&branch=test_project'
+Start-Process 'https://sonarcloud.io/project/issues?id=WasMas_Farm_App&branch=test_project&resolved=false'
 ```
 
-Pour une lecture chiffrée du verdict courant (projet public) :
+Pour retrouver les constats actuellement ouverts et leur emplacement :
 
 ```powershell
-$sonar = Invoke-RestMethod 'https://sonarcloud.io/api/qualitygates/project_status?projectKey=WasMas_Farm_App&branch=test_project'
-$sonar.projectStatus.status
-$sonar.projectStatus.conditions | Format-Table metricKey,status,actualValue,errorThreshold
+$sonar = Invoke-RestMethod 'https://sonarcloud.io/api/issues/search?componentKeys=WasMas_Farm_App&branch=test_project&resolved=false&ps=100'
+$sonar.total
+$sonar.issues | Format-Table rule,status,component,line,message -Wrap
 ```
 
 L’analyse elle-même s’exécute dans **SonarQube Quality Gate**, après **Rapports de couverture**, sur le backend, les scripts Python et les sources Dart. Le workflow réutilise le jeton configuré dans GitHub.
@@ -276,6 +286,28 @@ Start-Process 'https://github.com/WasMas/Farm_App/actions/workflows/quality.yml?
 
 Sélectionner un run par son commit. Un push sur `test_project` déclenche le workflow. Le premier job Django refait l’installation pour la portabilité, les suivants peuvent restaurer l’environnement Python. Flutter compile le web une fois par run et Sonar/ZAP récupèrent l’artefact. Ces optimisations réutilisent les outils et la compilation ; chaque test planifié s’exécute. Les rapports de la plupart des catégories sont conservés sept jours : télécharger ceux de la soutenance avant expiration.
 
+### C9 · Exemples à expliquer au jury
+
+Les résultats ci-dessous proviennent du [run de référence](https://github.com/WasMas/Farm_App/actions/runs/45043679144) ou des preuves locales indiquées. Un test réussit aussi lorsqu’il obtient le refus attendu.
+
+| Test ou contrôle | Manipulation | Résultat observé |
+|---|---|---|
+| Identifiant de ferme · Python | Convertir `42`, puis essayer zéro, un négatif, du texte et une valeur absente. | 42 accepté. Les quatre entrées invalides déclenchent l’erreur attendue. |
+| Quantité d’une activité · Dart | Lire `12.500` en mètres cubes, puis une quantité absente. | Le champ affiche `12.5 m³`, puis une chaîne vide. |
+| CRUD · API et PostgreSQL | Créer, relire, modifier et supprimer ferme, parcelle, plantation et activité. | 201, mises à jour persistées, 204 puis 404 après suppression. Le groupe API a réussi ses 41 tests. |
+| Limite de surface · API | Demander 0,99, 1,00 et 1,01 ha dans trois essais avec 1 ha libre. | 201, 201 et 400. [Rapport](evidence/area-boundaries.txt). |
+| Écriture de l’audit · fiabilité | Faire échouer l’audit pendant la création, vérifier la base puis réessayer. | Zéro activité après la panne. À la reprise, HTTP 201 et une activité avec son audit. |
+| Dernier hectare · concurrence | Deux clients demandent chacun 1 ha au même moment. | Attente sur verrou observée. Un 201, un 400 et un seul hectare alloué. [Rapport](evidence/planting-race.txt). |
+| Initialisation admin · fiabilité | Exécuter deux fois la commande qui prépare l’administrateur. | Un seul superutilisateur et le même mot de passe haché après le second appel. |
+| Journal · widget Flutter | Afficher une irrigation, puis chercher `unmatched` à 390 et 1 440 px. | La quantité apparaît, puis « A fresh page ». Les deux tests passent. |
+| Session Flutter · fiabilité | L’API répond 401 et le service de renouvellement répond temporairement 503. | L’application conserve le jeton de renouvellement et ne marque pas la session expirée. |
+| Admin · compatibilité et clavier | Se connecter au clavier et rechercher la ligne d’audit avec Playwright. | Auteur, action et entité vérifiés sur Chromium et Firefox. |
+| Accès HTTP · sécurité | Consulter le tableau de bord sans authentification. | HTTP 401 et en-têtes `nosniff` et `DENY` vérifiés. |
+| SAST et SCA | Analyser le code Python/Dart et les versions des dépendances Python/Pub. | Bandit relève un cas moyen, Semgrep zéro cas TLS, pip-audit aucun avis connu et OSV zéro avis pour 105 paquets. |
+| ZAP · analyse passive | Observer la connexion propriétaire, le tableau de bord et la recherche du journal. | Quatre alertes faibles sur le champ `Server` et deux informatives. |
+| Tableau de bord · charge | Vingt utilisateurs lisent cinq fois chacun leur tableau de bord. | 100 lectures réussies. Sur le runner, p95 de 448,9 ms sous la cible de 500 ms. |
+| Installation · portabilité | Appliquer les migrations sur PostgreSQL sous Ubuntu, vérifier la santé, compiler Flutter Web. | La réponse indique PostgreSQL et la compilation produit l’artefact **flutter-web-ci**. |
+
 ## D · Quelles captures mettre sur chaque diapo ?
 
 Le PowerPoint est projetable tel quel. Les consignes ci-dessous permettent de remplacer les preuves par celles de la répétition finale. Dans PowerPoint, utiliser **Format de l’image → Changer l’image**, ou insérer la nouvelle capture sur l’emplacement décrit. Garder le rapport, le commit ou la date associés à chaque résultat.
@@ -284,13 +316,14 @@ Le PowerPoint est projetable tel quel. Les consignes ci-dessous permettent de re
 |---|---|---|
 | 1 · Fieldbook | À droite, le **tableau de bord Flutter connecté**, déjà intégré. | Sélecteur de ferme, bouton de saisie et indicateurs. |
 | 2 · Parcours | En haut à droite, la **recherche dans le journal**. En bas, la **ligne d’audit Django**. Les captures intégrées proviennent de deux démonstrations distinctes. Pour photographier une même opération, exécuter B2 et prendre les deux vues à la suite. | Sur la première, la recherche TEK-UP et son résultat. Sur la seconde, acteur, action, entité, ID, heure. |
-| 3 · Pipeline | Au centre, le **graphe du run** en vue agrandie, déjà intégré. | Les cinq étapes et les dépendances. Conserver le commit dans la légende. |
+| 3 · Exemples unitaires et API | Les entrées et les résultats figurent sur la diapo. Pour une question, ouvrir **unit** ou **api**. | Identifiant positif, conversion de quantité et codes HTTP du CRUD. |
 | 4 · Tests en direct | À la place de chacun des deux résultats, si souhaité, recadrer le **terminal 3** après chaque commande B4. | À gauche, nom du test de reprise et `OK`. À droite, largeurs 390 et 1440 et `All tests passed!`. |
 | 5 · Concurrence | En bas, remplacer l’extrait par la **fin de sortie de `crops.test_concurrency`**. | Confirmation du verrou, 201, 400 et ligne de vérification en base. |
 | 6 · Sécurité | À droite, remplacer le bilan ZAP par **`$zap.findings`** (§ C6) ou le tableau du job ZAP. | Alerte 10036, niveau Low, route locale et nature du header. Recadrer sur la table. |
-| 7 · Sonar | À gauche, **Failed** sur 21536c8. À droite, **Passed** sur 820fa5b. Les deux captures Sonar réelles sont intégrées. | Commit, verdict, métrique et seuil. Pour remplacer le retest, actualiser le commit et la mesure de droite. |
+| 7 · Sonar | Capture réelle de **Issues → test_project → All issues** au centre. | Total, fichiers, messages, priorités, statut Open et numéros de ligne. |
 | 8 · Charge | Garder les mesures en grand. Si une capture est demandée, remplacer le texte du bas par les **deux lignes `Dashboard:`** de C7. | Versions avant/après, p95, seuil et nombre de requêtes. |
-| 9 · Bilan | Aucune capture nécessaire. En réponse à une question, ouvrir **traceability.md** et agrandir la ligne choisie. | Exigence, outil et lien vers un résultat réel. |
+| 9 · Pipeline | Au centre, le graphe du run en vue agrandie. | Les cinq étapes, leurs dépendances et les résultats. |
+| 10 · Bilan | Aucune capture nécessaire. En réponse à une question, ouvrir **traceability.md** et agrandir la ligne choisie. | Exigence, outil et lien vers un résultat réel. |
 
 > [!tip] En cas de panne de réseau
 > Démontrer B2 et B4 sur les services locaux. Pour GitHub et Sonar, projeter les captures du PowerPoint. Pour ZAP et la charge, ouvrir les rapports versionnés dans `docs/quality/evidence/`. Préciser « mesure archivée » en montrant ces résultats.

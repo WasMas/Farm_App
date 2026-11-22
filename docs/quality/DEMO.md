@@ -39,7 +39,7 @@ Ouvrir Edge à **http://localhost:8080**. Utiliser cette adresse exacte pour que
 
 ## Pendant les 10 minutes
 
-Le [conducteur Obsidian, section B](Soutenance.md) suit les neuf diapositives du [PowerPoint](Fieldbook-Soutenance.pptx). Préparer les terminaux avant le passage. Montrer l’observation et son audit, le graphe GitHub, puis exécuter les deux commandes ci-dessous. Pour la diapo 7, comparer le [contrôle initial](https://github.com/WasMas/Farm_App/actions/runs/45042016628) au [retest du commit 820fa5b](https://github.com/WasMas/Farm_App/actions/runs/45043679144). Le seuil est resté à 80 %, la couverture du nouveau code atteint 100 % et les 13 jobs ont réussi.
+Le [conducteur Obsidian, section B](Soutenance.md) suit les dix diapositives du [PowerPoint](Fieldbook-Soutenance.pptx). Après la démonstration, expliquer les tests unitaires et le CRUD, puis exécuter les deux commandes ci-dessous. Montrer la concurrence, la sécurité et les [constats enregistrés dans Sonar](https://sonarcloud.io/project/issues?id=WasMas_Farm_App&branch=test_project&resolved=false), puis le test de charge. La diapo 9 replace ces exemples dans le [pipeline complet](https://github.com/WasMas/Farm_App/actions/runs/45043679144). Ses notes contiennent le texte à dire pour chacune des cinq étapes.
 
 **Terminal 3 — copier les deux commandes séparément, devant le jury**
 
