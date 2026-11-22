@@ -32,6 +32,20 @@ def stop(process):
             process.wait()
 
 
+def prepare_web_build(root, api, web_build):
+    if web_build is not None:
+        site = web_build.resolve(strict=True)
+        if not (site / 'index.html').is_file():
+            raise ValueError(f'Missing Flutter web entry point in {site}')
+        return site
+
+    site = root / '.local/zap-web'
+    subprocess.run([shutil.which('flutter') or 'flutter', 'build', 'web', '--release',
+                    '--no-web-resources-cdn', f'--output={site}', f'--dart-define=API_BASE_URL={api}/api/'],
+                   cwd=root / 'frontend', check=True)
+    return site
+
+
 def observe(jar, manage, env, root, web_build=None):
     jar = Path(jar).resolve(strict=True)
     backend_port = 18000
@@ -46,15 +60,7 @@ def observe(jar, manage, env, root, web_build=None):
 
     with ExitStack() as stack:
         temp = stack.enter_context(tempfile.TemporaryDirectory(prefix='farm-passive-'))
-        if web_build is not None:
-            site = web_build.resolve(strict=True)
-            if not (site / 'index.html').is_file():
-                raise ValueError(f'Missing Flutter web entry point in {site}')
-        else:
-            site = root / '.local/zap-web'
-            subprocess.run([shutil.which('flutter') or 'flutter', 'build', 'web', '--release',
-                            '--no-web-resources-cdn', f'--output={site}', f'--dart-define=API_BASE_URL={api}/api/'],
-                           cwd=root / 'frontend', check=True)
+        site = prepare_web_build(root, api, web_build)
         web = stack.enter_context(ThreadingHTTPServer(('127.0.0.1', 0),
                                   partial(SimpleHTTPRequestHandler, directory=site)))
         Thread(target=web.serve_forever, daemon=True).start()

@@ -85,6 +85,9 @@ jobs:
         run: |
           mkdir -p reports
           coverage run --data-file=reports/covdata.unit backend/manage.py test accounts activities ai_chat core crops dashboard farms predictions recommendations weather --tag unit -v 2 2>&1 | tee reports/unit.txt
+      - name: Vérifier le choix du build Flutter pour la démo
+        run: |
+          coverage run --data-file=reports/covdata.demo -m unittest discover -s scripts -p test_demo_web_build.py -v 2>&1 | tee reports/demo-unit.txt
       - uses: actions/upload-artifact@v7
         if: always()
         with:
