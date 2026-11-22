@@ -195,4 +195,4 @@ No GitHub remote was configured, so merges are local and no PRs were published.
 Local configuration, tokens, secrets, caches, virtual environments, generated
 registrants, build output and previews are excluded from Git.
 
-For the November validation, see the [live demo guide](docs/quality/DEMO.md) and [quality evidence](docs/quality/traceability.md).
+For the November validation, see the [live demo guide](docs/quality/Soutenance.md) and [quality evidence](docs/quality/traceability.md).
