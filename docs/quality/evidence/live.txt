@@ -1,6 +1,6 @@
 Creating test database for alias 'default' ('test_farm_app')...
 
-Found 3 test(s).
+Found 5 test(s).
 Operations to perform:
   Synchronize unmigrated apps: corsheaders, dashboard, messages, rest_framework, staticfiles
   Apply all migrations: accounts, activities, admin, ai_chat, auth, contenttypes, core, crops, farms, predictions, recommendations, sessions, token_blacklist, weather
@@ -53,12 +53,14 @@ Running migrations:
   Applying token_blacklist.0011_linearizes_history... OK
   Applying token_blacklist.0012_alter_outstandingtoken_user... OK
   Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+test_selected_farm_limits_dashboard (dashboard.tests.DashboardTests.test_selected_farm_limits_dashboard) ... ok
+test_summary_converts_units_and_isolates_users (dashboard.tests.DashboardTests.test_summary_converts_units_and_isolates_users) ... ok
 test_admin_audit_keyboard_journey (core.quality_live.LiveQualityTests.test_admin_audit_keyboard_journey) ... ok
 test_dashboard_load (core.quality_live.LiveQualityTests.test_dashboard_load) ... ok
 test_unauthenticated_http_response (core.quality_live.LiveQualityTests.test_unauthenticated_http_response) ... ok
 
 ----------------------------------------------------------------------
-Ran 3 tests in 8.303s
+Ran 5 tests in 8.349s
 
 OK
 Destroying test database for alias 'default' ('test_farm_app')...
@@ -67,5 +69,5 @@ Destroying test database for alias 'default' ('test_farm_app')...
 System check identified no issues (0 silenced).
 chromium 159.0.8154.6: keyboard login and audit row verified
 firefox 159.0: keyboard login and audit row verified
-Dashboard: 20 owners, 20 farms, 100 successful requests, 1.74s, 57.6 req/s, p95 459.8 ms; target <500 ms
+Dashboard: 20 owners, 20 farms, 100 successful requests, 1.19s, 84.4 req/s, p95 341.1 ms; target <500 ms
 HTTP 401, nosniff and DENY verified on protected dashboard

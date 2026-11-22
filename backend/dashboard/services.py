@@ -1,29 +1,34 @@
 from datetime import timedelta
-from decimal import Decimal
-from django.db.models import Sum, Case, When, F, Value, DecimalField
+
+from django.db import connection
 from django.utils import timezone
-from farms.models import Field
-from crops.models import CropCycle
-from activities.models import Activity
-
-
-def converted_sum(queryset, conversions):
-    expression = Case(*[When(unit=unit, then=F('quantity') * Value(factor)) for unit, factor in conversions.items()],
-                      default=Value(0), output_field=DecimalField(max_digits=20, decimal_places=3))
-    return queryset.aggregate(total=Sum(expression))['total'] or Decimal(0)
 
 
 def summarize(farms):
-    fields = Field.objects.filter(farm__in=farms)
-    cycles = CropCycle.objects.filter(field__in=fields)
-    activities = Activity.objects.filter(cycle__in=cycles)
-    week = activities.filter(date__gte=timezone.localdate() - timedelta(days=6))
-    harvests = activities.filter(kind='harvest')
-    return {
-        'farms': farms.count(), 'fields': fields.count(), 'active_cycles': cycles.filter(status='active').count(),
-        'total_area': farms.aggregate(total=Sum('total_area'))['total'] or Decimal(0),
-        'activities_week': week.count(),
-        'irrigation_m3_week': converted_sum(week.filter(kind='irrigation'), {'m3': 1, 'l': Decimal('.001')}),
-        'harvest_kg': converted_sum(harvests, {'kg': 1, 't': 1000}),
-        'harvest_items': converted_sum(harvests, {'items': 1}),
-    }
+    # Each aggregate is computed at its own grain. Joining all four tables
+    # before summing would count a farm's area once for every activity.
+    farm_ids = list(farms.values_list('pk', flat=True))
+    start = timezone.localdate() - timedelta(days=6)
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            WITH fields AS (
+                SELECT id FROM farms_field WHERE farm_id = ANY(%s)
+            ), cycles AS (
+                SELECT id, status FROM crops_cropcycle WHERE field_id IN (SELECT id FROM fields)
+            )
+            SELECT
+                (SELECT COUNT(*) FROM fields) AS fields,
+                (SELECT COUNT(*) FROM cycles WHERE status = 'active') AS active_cycles,
+                (SELECT COALESCE(SUM(total_area), 0) FROM farms_farm WHERE id = ANY(%s)) AS total_area,
+                COUNT(*) FILTER (WHERE date >= %s) AS activities_week,
+                COALESCE(SUM(CASE unit WHEN 'l' THEN quantity / 1000
+                                       WHEN 'm3' THEN quantity END)
+                         FILTER (WHERE kind = 'irrigation' AND date >= %s), 0) AS irrigation_m3_week,
+                COALESCE(SUM(CASE unit WHEN 't' THEN quantity * 1000
+                                       WHEN 'kg' THEN quantity END)
+                         FILTER (WHERE kind = 'harvest'), 0) AS harvest_kg,
+                COALESCE(SUM(quantity) FILTER (WHERE kind = 'harvest' AND unit = 'items'), 0) AS harvest_items
+            FROM activities_activity WHERE cycle_id IN (SELECT id FROM cycles)
+        """, [farm_ids, farm_ids, start, start])
+        summary = dict(zip((column.name for column in cursor.description), cursor.fetchone()))
+    return {'farms': len(farm_ids), **summary}

@@ -33,6 +33,7 @@ jobs:
           python-version: '3.14'
       - name: Install application and test tools
         run: |
+          python -m pip install --upgrade "setuptools>=84.1.0"
           python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
           python -m pip install -r backend/requirements.txt -r scripts/quality-requirements.txt
           python -m playwright install --with-deps chromium firefox
@@ -67,7 +68,10 @@ jobs:
         run: bandit -r backend -x tests.py,quality_live.py,migrations,seed_demo.py -lll -f txt -o reports/bandit-high.txt && bandit -r backend -x tests.py,quality_live.py,migrations,seed_demo.py -ll --exit-zero -f txt -o reports/bandit-review.txt
       - name: Installed Python dependencies
         if: always()
-        run: pip-audit --local --progress-spinner off > reports/dependencies.txt 2>&1
+        run: |
+          python -c "from importlib.metadata import version; print('torch==' + version('torch').split('+')[0])" > /tmp/torch-upstream.txt
+          pip-audit --no-deps --disable-pip -r /tmp/torch-upstream.txt > reports/torch-upstream.txt 2>&1
+          pip-audit --local --progress-spinner off > reports/dependencies.txt 2>&1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
