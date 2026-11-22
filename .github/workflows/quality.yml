@@ -1,0 +1,100 @@
+name: Farm_App quality
+on:
+  push:
+    branches: [test_project]
+  pull_request:
+    branches: [main, test_project]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: farm_app
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_NAME: farm_app
+      DB_USER: postgres
+      DB_PASSWORD: ci-only
+      DJANGO_SECRET_KEY: disposable-runner-key-used-only-with-local-test-fixtures
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Install application and test tools
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r backend/requirements.txt -r scripts/quality-requirements.txt
+          python -m playwright install --with-deps chromium firefox
+          mkdir -p reports
+      - name: Fresh Linux installation and PostgreSQL health
+        run: |
+          python backend/manage.py migrate --noinput
+          python backend/manage.py runserver 127.0.0.1:8000 --noreload > reports/server.txt 2>&1 &
+          server=$!
+          trap 'kill "$server"' EXIT
+          curl --fail --retry 30 --retry-connrefused --retry-delay 1 http://127.0.0.1:8000/api/health/ > reports/health.json
+          python -c "import json; assert json.load(open('reports/health.json'))['database'] == 'postgresql'"
+      - name: Unit, API, integration and recovery
+        shell: bash
+        run: |
+          set -o pipefail
+          coverage run --branch --source=backend backend/manage.py test accounts activities ai_chat core crops dashboard farms predictions recommendations weather -v 2 2>&1 | tee reports/tests.txt
+      - name: Browser, HTTP security and dashboard load tests
+        env:
+          DB_POOL: '1'
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/test_backend.py core.quality_live -v 2 2>&1 | tee reports/live.txt
+      - name: Coverage and complexity
+        if: always()
+        run: |
+          radon cc backend -s -n C -a > reports/complexity.txt
+          coverage report --omit='*/migrations/*,*/tests.py,*/quality_live.py' > reports/coverage.txt
+      - name: Static application security scan
+        if: always()
+        run: bandit -r backend -x tests.py,quality_live.py,migrations,seed_demo.py -lll -f txt -o reports/bandit-high.txt && bandit -r backend -x tests.py,quality_live.py,migrations,seed_demo.py -ll --exit-zero -f txt -o reports/bandit-review.txt
+      - name: Installed Python dependencies
+        if: always()
+        run: pip-audit --local --progress-spinner off > reports/dependencies.txt 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-quality
+          path: reports/
+  flutter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.0'
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: Widget tests
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter test --reporter expanded test/*widget_test.dart test/responsive_shell_test.dart test/session_error_test.dart 2>&1 | tee widgets.txt
+      - run: flutter build web --release --no-web-resources-cdn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flutter-quality
+          path: frontend/widgets.txt
+

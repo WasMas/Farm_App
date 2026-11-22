@@ -1,0 +1,5 @@
+coverage==7.17.4
+radon==6.0.1
+bandit==1.9.4
+pip-audit==2.10.1
+playwright==1.65.2

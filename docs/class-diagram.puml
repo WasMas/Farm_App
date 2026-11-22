@@ -4,7 +4,7 @@ class User {
   id: BigInt
   username: String
   email: String
-  role: Admin | Farmer | Expert
+  role: Admin | Owner | Worker
 }
 class Farm {
   name: String

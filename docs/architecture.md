@@ -11,12 +11,14 @@ input; class-based views and DRF ViewSets handle requests. Weather fetching and
 dashboard calculations live in service modules. Django templates power the
 built-in administration site; Flutter consumes JSON rather than Django HTML.
 
-Registration always creates a farmer. Administrator, farmer, and expert groups
-have Django model permissions. Application endpoints additionally enforce farm
-ownership/membership: owners manage sharing/deletion, managers edit farms,
-workers record fieldwork, viewers read. Experts have read-only access to assigned
-farms in this MVP. Administrators can manage all farms and the crop catalogue.
-Changing a user's role in Django Admin also updates their staff access/group.
+Django provides ORM transactions, authentication and a built-in audit review interface.
+PostgreSQL enforces foreign keys and supports concurrent journal updates. Flutter
+provides one responsive client for field work and desktop review.
+
+The account roles are administrator, farm owner and farm worker. Administrators
+provision owners. Owners manage their farms and assign workers to fields.
+Farm membership adds manager, worker and viewer permissions. The API checks
+both account privileges and resource scope before allowing writes.
 
 Each farm starts with zero or more fields. Crop types are reference data;
 planting cycles identify one crop in one field over one season. Multiple active

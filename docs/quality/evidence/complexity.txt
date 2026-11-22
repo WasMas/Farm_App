@@ -1,0 +1,13 @@
+backend\activities\serializers.py
+    M 30:4 ActivitySerializer.validate - C (16)
+backend\ai_chat\services\gemini_service.py
+    F 57:0 generate_gemini_reply - C (12)
+backend\core\management\commands\seed_demo.py
+    M 32:4 Command.handle - C (12)
+backend\crops\serializers.py
+    M 73:4 CropCycleSerializer.validate - C (20)
+backend\weather\services.py
+    F 42:0 weather_for - C (16)
+
+5 blocks (classes, functions, methods) analyzed.
+Average complexity: C (15.2)

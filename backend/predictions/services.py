@@ -17,8 +17,8 @@ _model = None
 def get_disease_model():
     global _processor, _model
     if _processor is None or _model is None:
-        _processor = AutoImageProcessor.from_pretrained(MODEL_ID)
-        _model = AutoModelForImageClassification.from_pretrained(MODEL_ID)
+        _processor = AutoImageProcessor.from_pretrained(MODEL_ID, revision='9e3c97cf1e63e2a665a27c7bccd0ac067a2dbe5d')
+        _model = AutoModelForImageClassification.from_pretrained(MODEL_ID, revision='9e3c97cf1e63e2a665a27c7bccd0ac067a2dbe5d')
         _model.eval()
     return _processor, _model
 
@@ -121,3 +121,4 @@ def yield_prediction(cycle):
         'source': 'baseline',
         'disclaimer': '',
     }
+

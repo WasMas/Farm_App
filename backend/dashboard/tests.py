@@ -29,3 +29,13 @@ class DashboardTests(TestCase):
         client.force_authenticate(other)
         self.assertEqual(client.get('/api/dashboard/').data['farms'], 0)
         self.assertEqual(client.get('/api/dashboard/').data['recent_activities'], [])
+
+    def test_selected_farm_limits_dashboard(self):
+        owner = User.objects.create_user('dashboard-owner')
+        a = Farm.objects.create(owner=owner, name='North', location='Tunis', total_area=4)
+        Farm.objects.create(owner=owner, name='South', location='Tunis', total_area=8)
+        client = APIClient()
+        client.force_authenticate(owner)
+        self.assertEqual(client.get('/api/dashboard/').data['farms'], 2)
+        data = client.get('/api/dashboard/', {'farm': a.pk}).data
+        self.assertEqual((data['farms'], data['total_area']), (1, 4))

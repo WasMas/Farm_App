@@ -10,6 +10,7 @@ import '../../activities/presentation/activity_tile.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../../crops/domain/crop_cycle.dart';
 import '../domain/farm_summary.dart';
+import '../../farms/presentation/farm_providers.dart';
 import 'dashboard_provider.dart';
 import 'field_sketch.dart';
 
@@ -34,6 +35,26 @@ class HomeScreen extends ConsumerWidget {
                     icon: const Icon(Icons.refresh),
                   ),
           ),
+          if (ref.watch(farmsProvider).asData?.value case final farms?
+              when farms.isNotEmpty)
+            DropdownButton<int>(
+              hint: const Text('All farms'),
+              value:
+                  farms.any(
+                    (farm) => farm.id == ref.watch(dashboardFarmProvider),
+                  )
+                  ? ref.watch(dashboardFarmProvider)
+                  : null,
+              items: [
+                const DropdownMenuItem<int>(
+                  value: null,
+                  child: Text('All farms'),
+                ),
+                for (final farm in farms)
+                  DropdownMenuItem(value: farm.id, child: Text(farm.name)),
+              ],
+              onChanged: ref.read(dashboardFarmProvider.notifier).select,
+            ),
           ref
               .watch(dashboardProvider)
               .when(

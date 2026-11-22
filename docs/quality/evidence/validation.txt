@@ -1,0 +1,108 @@
+Creating test database for alias 'default' ('test_farm_app')...
+
+Found 41 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, dashboard, messages, rest_framework, staticfiles
+  Apply all migrations: accounts, activities, admin, ai_chat, auth, contenttypes, core, crops, farms, predictions, recommendations, sessions, token_blacklist, weather
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying accounts.0001_initial... OK
+  Applying accounts.0002_user_bio_user_profile_image_user_profile_image_url... OK
+  Applying accounts.0003_alter_user_role... OK
+  Applying accounts.0004_simplify_user_roles... OK
+  Applying farms.0001_initial... OK
+  Applying crops.0001_initial... OK
+  Applying crops.0002_seed_crop_types... OK
+  Applying activities.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying ai_chat.0001_initial... OK
+  Applying core.0001_initial... OK
+  Applying core.0002_alter_auditevent_action... OK
+  Applying crops.0003_croptype_reference_data... OK
+  Applying farms.0002_fieldassignment... OK
+  Applying predictions.0001_initial... OK
+  Applying recommendations.0001_initial... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+test_admin_audit_filters_by_action_actor_and_entity (accounts.tests.AdminDashboardTests.test_admin_audit_filters_by_action_actor_and_entity) ... ok
+test_admin_can_change_user_role (accounts.tests.AdminDashboardTests.test_admin_can_change_user_role) ... ok
+test_admin_owner_creation_creates_audit_event (accounts.tests.AdminDashboardTests.test_admin_owner_creation_creates_audit_event) ... ok
+test_only_admin_can_view_dashboard (accounts.tests.AdminDashboardTests.test_only_admin_can_view_dashboard) ... ok
+test_bootstrap_is_idempotent_and_does_not_reset_password (accounts.tests.AuthenticationTests.test_bootstrap_is_idempotent_and_does_not_reset_password) ... ok
+test_bootstrap_requires_explicit_credentials (accounts.tests.AuthenticationTests.test_bootstrap_requires_explicit_credentials) ... ok
+test_registration_cannot_choose_admin_and_tokens_logout (accounts.tests.AuthenticationTests.test_registration_cannot_choose_admin_and_tokens_logout) ... ok
+test_role_and_admin_flags_stay_consistent (accounts.tests.AuthenticationTests.test_role_and_admin_flags_stay_consistent) ... ok
+test_weak_password_and_protected_endpoint (accounts.tests.AuthenticationTests.test_weak_password_and_protected_endpoint) ... ok
+test_failed_audit_rolls_back_activity_and_retry_succeeds (activities.tests.ActivityTests.test_failed_audit_rolls_back_activity_and_retry_succeeds) ... ok
+test_isolation_and_read_only_membership (activities.tests.ActivityTests.test_isolation_and_read_only_membership) ... ok
+test_units_dates_and_observations (activities.tests.ActivityTests.test_units_dates_and_observations) ... ok
+test_postgresql_health (core.tests.HealthTests.test_postgresql_health) ... ok
+test_four_entity_crud (core.tests.JournalCrudTests.test_four_entity_crud) ... ok
+test_admin_can_manage_reference_data (crops.tests.CropTests.test_admin_can_manage_reference_data) ... ok
+test_crop_reference_is_admin_only_and_invalid_dates (crops.tests.CropTests.test_crop_reference_is_admin_only_and_invalid_dates) ... ok
+test_cycle_lifecycle_and_area (crops.tests.CropTests.test_cycle_lifecycle_and_area) ... ok
+test_selected_farm_limits_dashboard (dashboard.tests.DashboardTests.test_selected_farm_limits_dashboard) ... ok
+test_summary_converts_units_and_isolates_users (dashboard.tests.DashboardTests.test_summary_converts_units_and_isolates_users) ... ok
+test_field_area_and_farm_area_validation (farms.tests.FarmTests.test_field_area_and_farm_area_validation) ... ok
+test_isolation_and_relation_validation (farms.tests.FarmTests.test_isolation_and_relation_validation) ... ok
+test_shared_read_only_and_worker_permissions (farms.tests.FarmTests.test_shared_read_only_and_worker_permissions) ... ok
+test_worker_cannot_create_farms_but_can_read_assigned_farm (farms.tests.FarmTests.test_worker_cannot_create_farms_but_can_read_assigned_farm) ... ok
+test_disease_prediction_requires_image (predictions.tests.PredictionTests.test_disease_prediction_requires_image) ... ok
+  Applying weather.0001_initial... OK
+System check identified no issues (0 silenced).
+test_pretrained_model_returns_a_confident_label_or_abstains (predictions.tests.PredictionTests.test_pretrained_model_returns_a_confident_label_or_abstains) ... 
+Loading weights:   0%|          | 0/314 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 314/314 [00:00<00:00, 15730.77it/s]
+ok
+test_yield_prediction_returns_estimate (predictions.tests.PredictionTests.test_yield_prediction_returns_estimate) ... ok
+test_accepting_future_recommendation_is_rejected (recommendations.tests.RecommendationTests.test_accepting_future_recommendation_is_rejected) ... ok
+test_accepting_irrigation_creates_day_work_activity (recommendations.tests.RecommendationTests.test_accepting_irrigation_creates_day_work_activity) ... ok
+test_accepting_recommendation_updates_cycle (recommendations.tests.RecommendationTests.test_accepting_recommendation_updates_cycle) ... ok
+test_admin_role_sees_recommendations_for_other_farms (recommendations.tests.RecommendationTests.test_admin_role_sees_recommendations_for_other_farms) ... ok
+test_advanced_calendar_date_creates_irrigation_recommendation (recommendations.tests.RecommendationTests.test_advanced_calendar_date_creates_irrigation_recommendation) ... ok
+test_calendar_check_creates_next_irrigation_after_latest_due_date (recommendations.tests.RecommendationTests.test_calendar_check_creates_next_irrigation_after_latest_due_date) ... ok
+test_calendar_check_creates_pending_recommendation (recommendations.tests.RecommendationTests.test_calendar_check_creates_pending_recommendation) ... ok
+test_owner_generation_does_not_include_another_owner_farm (recommendations.tests.RecommendationTests.test_owner_generation_does_not_include_another_owner_farm) ... ok
+test_refusing_recommendation_does_not_change_cycle (recommendations.tests.RecommendationTests.test_refusing_recommendation_does_not_change_cycle) ... ok
+test_soil_mismatch_is_a_warning_not_a_block (recommendations.tests.RecommendationTests.test_soil_mismatch_is_a_warning_not_a_block) ... ok
+test_worker_generation_only_includes_assigned_field (recommendations.tests.RecommendationTests.test_worker_generation_only_includes_assigned_field) ... ok
+test_success_cache_partial_values_and_failure_placeholders (weather.tests.WeatherTests.test_success_cache_partial_values_and_failure_placeholders) ... ok
+test_unconfigured_and_key_is_never_returned (weather.tests.WeatherTests.test_unconfigured_and_key_is_never_returned) ... ok
+test_weather_is_scoped_to_visible_farms (weather.tests.WeatherTests.test_weather_is_scoped_to_visible_farms) ... ok
+test_filter_identifier_must_be_positive (core.tests.FilterUnitTests.test_filter_identifier_must_be_positive) ... ok
+
+----------------------------------------------------------------------
+Ran 41 tests in 15.168s
+
+OK
+Destroying test database for alias 'default' ('test_farm_app')...
+

@@ -2,15 +2,15 @@
 left to right direction
 actor Visitor
 actor "Account holder" as Holder
-actor Farmer
+actor "Farm owner" as Owner
 actor Administrator as Admin
-actor "Agricultural expert (read only)" as Expert
+actor "Assigned worker" as Worker
 actor "Open-Meteo API" as WeatherAPI
-Farmer --|> Holder
+Owner --|> Holder
 Admin --|> Holder
-Expert --|> Holder
+Worker --|> Holder
 rectangle "Fieldbook — first-month MVP" {
-  usecase "Register / sign in" as Login
+  usecase "Sign in" as Login
   usecase "Sign out" as Logout
   usecase "View permitted farms and fields" as ReadFarm
   usecase "View planting seasons" as ReadCrops
@@ -34,10 +34,11 @@ Holder -- History
 Holder -- Dashboard
 Holder -- Weather
 Holder -- WeatherConfig
-Farmer -- ManageFarm
-Farmer -- Share
-Farmer -- ManageCrops
-Farmer -- Work
+Owner -- ManageFarm
+Owner -- Share
+Owner -- ManageCrops
+Owner -- Work
+Worker -- Work
 Admin -- ManageFarm
 Admin -- Share
 Admin -- ManageCrops
@@ -48,6 +49,6 @@ Fetch ..> Weather : <<extend>>\n[connected and refresh needed]
 WeatherAPI -- Fetch
 note bottom of ManageFarm
   Changes require the appropriate farm membership.
-  An expert does not inherit farmer write operations.
+  A worker records fieldwork on assigned fields.
 end note
 @enduml

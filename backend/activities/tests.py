@@ -38,3 +38,18 @@ class ActivityTests(TestCase):
         FarmMembership.objects.create(farm=self.farm, user=self.other, role='viewer')
         self.assertEqual(self.client.get('/api/activities/').data['count'], 1)
         self.assertEqual(self.client.post('/api/activities/', self.payload).status_code, 400)
+
+    def test_failed_audit_rolls_back_activity_and_retry_succeeds(self):
+        from unittest.mock import patch
+        from .models import Activity
+
+        with patch('activities.views.record_event', side_effect=RuntimeError('Audit unavailable')):
+            with self.assertRaisesMessage(RuntimeError, 'Audit unavailable'):
+                self.client.post('/api/activities/', self.payload)
+        self.assertFalse(Activity.objects.exists())
+        response = self.client.post('/api/activities/', self.payload)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Activity.objects.count(), 1)
+        event = AuditEvent.objects.get(entity='activities.Activity', action='create')
+        self.assertEqual((event.actor_id, event.object_id), (self.owner.pk, response.data['id']))
+        self.assertIsNotNone(event.recorded_at)

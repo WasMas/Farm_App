@@ -7,7 +7,7 @@ and DM Sans typography; a field illustration drawn in Flutter.
 ## First-month MVP
 
 - Registration, JWT login/refresh/logout, protected navigation and secure token storage.
-- Administrator, farmer and expert roles; Django groups; farm membership permissions.
+- Administrator, owner and worker roles; Django groups; farm membership permissions.
 - Farm/field CRUD, coordinates, decimal hectares and combined-area validation.
 - Shared farm access: owner, manager, worker and viewer responsibilities.
 - Admin-managed crop catalogue; planting cycles, varieties, stages and completed seasons.
@@ -53,7 +53,7 @@ choosing another configured identity rather than silently promoting an account.
 
 The initial username/password are in `backend/.env` under `INITIAL_ADMIN_*`.
 Django Admin: **http://127.0.0.1:8000/admin/**. It manages accounts, roles,
-reference data and audit records. Public registration always creates a farmer.
+reference data and audit records. Administrators provision owner accounts.
 
 ## Start Flutter
 
@@ -194,3 +194,5 @@ No GitHub remote was configured, so merges are local and no PRs were published.
 
 Local configuration, tokens, secrets, caches, virtual environments, generated
 registrants, build output and previews are excluded from Git.
+
+For the November validation, see the [live demo guide](docs/quality/DEMO.md) and [quality evidence](docs/quality/traceability.md).

@@ -59,3 +59,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Reuse PostgreSQL sessions for concurrent web requests when enabled.
+if os.getenv('DB_POOL') == '1':
+    DATABASES['default']['OPTIONS'] = {'pool': {'min_size': 2, 'max_size': 12}}
