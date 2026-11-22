@@ -66,8 +66,8 @@ Connexion Flutter avec `demo_owner` et le mot de passe du jeu de démo `Fieldboo
 
 ### A3 · Ouvrir les preuves avant d’entrer
 
-- [ ] Ouvrir le [run complet de référence, commit 80b83c0](https://github.com/WasMas/Farm_App/actions/runs/45040746720), agrandir son graphe et repérer les artefacts sous **Summary**.
-- [ ] Ouvrir le [run du commit 21536c8](https://github.com/WasMas/Farm_App/actions/runs/45042016628) et le [bilan Sonar de test_project](https://sonarcloud.io/dashboard?id=WasMas_Farm_App&branch=test_project). Le 22 novembre, Sonar indiquait **0 % sur 9 nouvelles lignes à couvrir**, minimum **80 %**. DAST et performance ont donc été ignorés sur **ce** run. Le tableau Sonar en ligne évolue avec les analyses.
+- [ ] Ouvrir le [run de référence, 13 jobs réussis au commit 820fa5b](https://github.com/WasMas/Farm_App/actions/runs/45043679144), agrandir son graphe et repérer les artefacts sous **Summary**.
+- [ ] Ouvrir le [run du commit 21536c8](https://github.com/WasMas/Farm_App/actions/runs/45042016628) et le [bilan Sonar de test_project](https://sonarcloud.io/dashboard?id=WasMas_Farm_App&branch=test_project). Le 22 novembre, Sonar indiquait **0 % sur 9 nouvelles lignes à couvrir**, minimum **80 %**. DAST et performance ont donc été ignorés sur **ce** run. Après correction, le [verdict archivé de 820fa5b](https://sonarcloud.io/api/qualitygates/project_status?analysisId=41c251e2-92d0-4a39-b59a-055a8e0d5299) indique **100 %** pour le nouveau code. Le tableau Sonar en ligne évolue avec les analyses.
 - [ ] Garder le PowerPoint, la [matrice des huit caractéristiques](traceability.md), le [rapport ZAP](evidence/zap-passive.json) et les [mesures locales](evidence/live.txt) disponibles hors ligne. Agrandir le texte du terminal.
 
 ## B · Les dix minutes, dans l’ordre des diapositives
@@ -109,17 +109,17 @@ Diapo 5. Deux personnes autorisées demandent chacune le dernier hectare. Le ver
 
 Diapo 6. **SAST** lit le code, **SCA** compare les versions de dépendances aux avis publiés, **DAST passif** observe le trafic réel du parcours Flutter. Dans le JSON ZAP, repérer la règle **10036**, le risque **Low**, la route et le champ de réponse `Server`. Quatre occurrences concernent quatre routes du serveur local. Les deux autres alertes sont informatives. Le TP4 fournit aussi une correction vérifiable de setuptools et son retest (§ C4).
 
-### B7 · 7:10–8:10 · Pourquoi Sonar a bloqué un run
+### B7 · 7:10–8:10 · Du contrôle en échec au retest réussi
 
-Diapo 7. Lire le commit et la portée **New Code** sur la capture. Le minimum est 80 % pour le nouveau code. Montrer que le job Sonar échoue et que GitHub marque les deux jobs suivants **Skipped**. Les **74 %** du rapport Python local correspondent à une autre mesure et à une autre exécution. Pour une nouvelle capture, relever ensemble le commit, le seuil et la valeur.
+Diapo 7. À gauche, montrer **21536c8** : aucune des neuf nouvelles lignes à couvrir ne figurait comme couverte. Les scripts de démo manquaient dans le rapport Python. À droite, montrer **820fa5b** : quatre tests de régression vérifient le choix du build Flutter et la CI inclut les scripts dans le rapport. Les **15 nouvelles lignes sur 15** sont couvertes, avec le même seuil de **80 %**. ZAP et performance ont ensuite réussi. Les **74 %** du rapport Python local archivé concernent un autre périmètre.
 
 ### B8 · 8:10–9:10 · Interpréter la charge
 
-Diapo 8. « 20 propriétaires démarrent ensemble. Chacun envoie cinq lectures successives, donc 100 requêtes au total et au plus 20 en vol. » Pour ces 100 réponses triées, le p95 est la 95ᵉ durée. La mesure locale archivée passe de **3 781,3 ms** avant optimisation à **341,1 ms** après, pour une cible **strictement inférieure à 500 ms**. Petit jeu de 20 fermes sans activités. Les temps diffèrent selon le matériel et la charge du runner.
+Diapo 8. « 20 propriétaires démarrent ensemble. Chacun envoie cinq lectures successives, donc 100 requêtes au total et au plus 20 en vol. » Pour ces 100 réponses triées, le p95 est la 95ᵉ durée. La mesure locale archivée passe de **3 781,3 ms** avant optimisation à **341,1 ms** après, pour une cible **strictement inférieure à 500 ms**. Petit jeu de 20 fermes sans activités. Sur le [runner GitHub de 820fa5b](https://github.com/WasMas/Farm_App/actions/runs/45043679144/job/137275114823), les 100 lectures ont réussi avec un p95 de **448,9 ms** et un débit de **71,2 requêtes/s**.
 
 ### B9 · 9:10–10:00 · Revenir aux exigences
 
-Diapo 9. Ouvrir la [matrice](traceability.md) sur une ligne choisie par le jury. Exemple : compatibilité → parcours admin au clavier → Playwright → Chromium et Firefox. Terminer sur la limite constatée et la suite logique : couvrir les nouvelles lignes identifiées par Sonar et relancer le même contrôle. À la fin, faire **Ctrl+C** dans le terminal 2 puis le terminal 1 si vous les avez démarrés pour cette démo. Le script Django supprime sa base jetable.
+Diapo 9. Ouvrir la [matrice](traceability.md) sur une ligne choisie par le jury. Exemple : compatibilité → parcours admin au clavier → Playwright → Chromium et Firefox. Terminer sur la correction vérifiée : le Quality Gate a réussi, puis ZAP et le test de charge ont terminé avec succès. La mesure de charge porte sur le petit jeu de démonstration. À la fin, faire **Ctrl+C** dans le terminal 2 puis le terminal 1 si vous les avez démarrés pour cette démo. Le script Django supprime sa base jetable.
 
 ## C · Répétition complète par catégorie
 
@@ -150,6 +150,7 @@ Montrer les migrations sur base neuve et le build web. La preuve sur une seconde
 
 ```powershell
 & $py scripts/test_backend.py @apps --tag unit -v 2
+& $py -m unittest discover -s scripts -p test_demo_web_build.py -v
 Push-Location frontend
 flutter test --no-pub --reporter expanded test/activity_unit_test.dart
 $widgets = (Get-ChildItem test/*widget_test.dart).FullName
@@ -157,7 +158,7 @@ flutter test --no-pub --reporter expanded @widgets test/responsive_shell_test.da
 Pop-Location
 ```
 
-Python accepte l’identifiant positif `42` et rejette notamment `0`, `-2` et du texte. Dart transforme la quantité API `12.500` en `12.5 m³` et traite la quantité absente. Les widgets vérifient le comportement des écrans. Artefacts **unit** et **components**.
+Python accepte l’identifiant positif `42` et rejette notamment `0`, `-2` et du texte. Les quatre tests de démo couvrent l’option CLI, sa transmission à ZAP, la validation du build fourni et la compilation locale. Dart transforme la quantité API `12.500` en `12.5 m³` et traite la quantité absente. Les widgets vérifient le comportement des écrans. Artefacts **unit** et **components**.
 
 ### C3 · API, intégration, fiabilité et navigateurs
 
@@ -206,10 +207,11 @@ Montrer **sca** et la [correction suivie du retest](traceability.md#course-exerc
 
 ### C5 · Couverture et SonarQube
 
-Cette mesure locale couvre la suite Django standard et les composants Flutter. La CI fusionne en plus les fichiers des jobs dédiés, dont le navigateur et la récupération de session. Pour citer une valeur de CI, télécharger **coverage**, ouvrir **coverage.txt**, **python.xml** ou **flutter.info** et noter le commit.
+Cette mesure locale couvre la suite Django standard, les quatre tests des scripts de démo et les composants Flutter. La CI fusionne en plus les fichiers des jobs dédiés, dont le navigateur et la récupération de session. Pour citer une valeur de CI, télécharger **coverage**, ouvrir **coverage.txt**, **python.xml** ou **flutter.info** et noter le commit.
 
 ```powershell
 & $py -m coverage run --data-file="$out/covdata" backend/manage.py test @apps -v 1
+& $py -m coverage run --append --data-file="$out/covdata" -m unittest discover -s scripts -p test_demo_web_build.py -v
 & $py -m coverage report --data-file="$out/covdata"
 & $py -m coverage xml --data-file="$out/covdata" -o "$out/python.xml"
 Push-Location frontend
@@ -228,7 +230,7 @@ $sonar.projectStatus.status
 $sonar.projectStatus.conditions | Format-Table metricKey,status,actualValue,errorThreshold
 ```
 
-L’analyse elle-même s’exécute dans **SonarQube Quality Gate**, après **Rapports de couverture**, sur les sources Python et Dart. Le workflow réutilise le jeton configuré dans GitHub.
+L’analyse elle-même s’exécute dans **SonarQube Quality Gate**, après **Rapports de couverture**, sur le backend, les scripts Python et les sources Dart. Le workflow réutilise le jeton configuré dans GitHub.
 
 ### C6 · DAST passif sur le parcours propriétaire
 
@@ -286,7 +288,7 @@ Le PowerPoint est projetable tel quel. Les consignes ci-dessous permettent de re
 | 4 · Tests en direct | À la place de chacun des deux résultats, si souhaité, recadrer le **terminal 3** après chaque commande B4. | À gauche, nom du test de reprise et `OK`. À droite, largeurs 390 et 1440 et `All tests passed!`. |
 | 5 · Concurrence | En bas, remplacer l’extrait par la **fin de sortie de `crops.test_concurrency`**. | Confirmation du verrou, 201, 400 et ligne de vérification en base. |
 | 6 · Sécurité | À droite, remplacer le bilan ZAP par **`$zap.findings`** (§ C6) ou le tableau du job ZAP. | Alerte 10036, niveau Low, route locale et nature du header. Recadrer sur la table. |
-| 7 · Sonar | À droite, **Summary → test_project → New Code**. La capture du commit 21536c8 est intégrée. | Commit, verdict, métrique et seuil. En changeant de run, actualiser aussi la légende et le texte de gauche. |
+| 7 · Sonar | À gauche, **Failed** sur 21536c8. À droite, **Passed** sur 820fa5b. Les deux captures Sonar réelles sont intégrées. | Commit, verdict, métrique et seuil. Pour remplacer le retest, actualiser le commit et la mesure de droite. |
 | 8 · Charge | Garder les mesures en grand. Si une capture est demandée, remplacer le texte du bas par les **deux lignes `Dashboard:`** de C7. | Versions avant/après, p95, seuil et nombre de requêtes. |
 | 9 · Bilan | Aucune capture nécessaire. En réponse à une question, ouvrir **traceability.md** et agrandir la ligne choisie. | Exigence, outil et lien vers un résultat réel. |
 

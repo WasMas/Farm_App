@@ -13,8 +13,8 @@ git switch test_project
 .\.venv\Scripts\python -m playwright install chromium firefox
 .\.venv\Scripts\python scripts/demo.py --check
 cd frontend
-flutter pub get
-flutter build web --release --no-web-resources-cdn
+flutter pub get --enforce-lockfile
+flutter build web --release --no-web-resources-cdn --dart-define=API_BASE_URL=http://127.0.0.1:8000/api/
 ```
 
 ## Démarrer la démonstration avant votre passage
@@ -39,15 +39,7 @@ Ouvrir Edge à **http://localhost:8080**. Utiliser cette adresse exacte pour que
 
 ## Pendant les 10 minutes
 
-| Temps | Manipulation et explication |
-|---|---|
-| 0–1 min | Montrer le tableau de bord. « Un propriétaire gère ses parcelles, ses plantations et les interventions. Les ouvriers agissent sur les parcelles affectées. L’administrateur contrôle les accès et l’audit. » |
-| 1–3 min | Choisir une ferme dans le sélecteur du tableau de bord. Cliquer sur **Record today’s work**, choisir l’observation, une plantation active et la date du jour. Saisir **TEK-UP feuilles saines** et enregistrer. Ouvrir **All records** et rechercher **TEK-UP**. |
-| 3–4 min | Actualiser l’onglet administrateur. Montrer la dernière ligne **activities.Activity**, l’action **create**, le propriétaire, l’identifiant de l’objet et l’heure. |
-| 4–6 min | Exécuter la commande API ci-dessous. « Le test provoque une panne d’audit. Il vérifie que rien n’a été enregistré à moitié, puis réessaie et vérifie l’activité et son audit. » Montrer le nom du test et **OK**. |
-| 6–7 min | Exécuter le test Flutter ci-dessous. « Le même historique peut être recherché sur téléphone et sur ordinateur. » Montrer les largeurs **390** et **1440** et les deux succès. |
-| 7–9 min | Ouvrir la [matrice](traceability.md), puis les rapports de charge, de couverture et de sécurité. Expliquer que p95 est le temps que 95 % des réponses respectent. Préciser la taille du jeu de données et le seul avertissement Bandit restant. |
-| 9–10 min | Montrer l’exécution GitHub Actions et ses artefacts si disponibles. Expliquer qu’un nouveau commit relance les vérifications. Garder les rapports locaux ouverts pour la présentation sans réseau. |
+Le [conducteur Obsidian, section B](Soutenance.md) suit les neuf diapositives du [PowerPoint](Fieldbook-Soutenance.pptx). Préparer les terminaux avant le passage. Montrer l’observation et son audit, le graphe GitHub, puis exécuter les deux commandes ci-dessous. Pour la diapo 7, comparer le [contrôle initial](https://github.com/WasMas/Farm_App/actions/runs/45042016628) au [retest du commit 820fa5b](https://github.com/WasMas/Farm_App/actions/runs/45043679144). Le seuil est resté à 80 %, la couverture du nouveau code atteint 100 % et les 13 jobs ont réussi.
 
 **Terminal 3 — copier les deux commandes séparément, devant le jury**
 
