@@ -76,3 +76,15 @@ $env:DB_POOL = '1'
 Ouvrir le dépôt GitHub → **Actions** → **Farm_App quality** → choisir l’exécution du commit présenté. Les jobs **backend** et **flutter** s’exécutent en parallèle. Ouvrir les étapes pour expliquer un succès ou un échec. Dans **Artifacts**, télécharger **backend-quality** et **flutter-quality**. Le workflow se déclenche à chaque push vers **test_project**. L’option manuelle GitHub dépend de la présence du workflow sur la branche par défaut.
 
 Pour reproduire la suite Django standard sur ce PC: depuis la racine, exécuter ` .\.venv\Scripts\python scripts/test_backend.py -v 2`. Les trois tests de serveur réel sont dans la commande de variante ci-dessus. Les commandes de couverture, de complexité, d’analyse statique et d’analyse des dépendances figurent dans [quality.yml](../../.github/workflows/quality.yml).
+
+## Bonus — deux demandes pour le dernier hectare
+
+Depuis la racine du projet, lancer ce test dans le terminal 3 :
+
+```powershell
+.\.venv\Scripts\python scripts/test_backend.py crops.test_concurrency -v 2
+```
+
+« Alice et Bob ont tous les deux le droit de planter. Ils demandent chacun le dernier hectare de la même parcelle. Le test maintient brièvement le verrou pour observer la seconde transaction en attente dans PostgreSQL. Une fois le verrou libéré, la seconde demande vérifie à nouveau la surface disponible. »
+
+Montrer **HTTP 201** (plantation créée), **HTTP 400** (surface insuffisante), puis la vérification en base : **une seule plantation d’un hectare**. Alice ou Bob peut réussir. [Exécution enregistrée](evidence/planting-race.txt).
