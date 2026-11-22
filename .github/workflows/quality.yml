@@ -230,7 +230,19 @@ jobs:
     needs: [api, reliability, browser]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      sonar_configured: ${{ steps.sonar_config.outputs.configured }}
     steps:
+      - name: Détecter la configuration Sonar
+        id: sonar_config
+        env:
+          PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY || secrets.SONAR_PROJECT_KEY }}
+        run: |
+          if [[ -n "$PROJECT_KEY" ]]; then
+            echo 'configured=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'configured=false' >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -267,7 +279,7 @@ jobs:
   sonar:
     name: 4 · SonarQube Quality Gate
     needs: [coverage]
-    if: ${{ vars.SONAR_PROJECT_KEY != '' && (github.event_name != 'pull_request' || (github.base_ref == 'test_project' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')) }}
+    if: ${{ needs.coverage.outputs.sonar_configured == 'true' && (github.event_name != 'pull_request' || (github.base_ref == 'test_project' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -290,8 +302,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >-
-            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
-            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION || secrets.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY || secrets.SONAR_PROJECT_KEY }}
   zap:
     name: 5 · DAST HTTP et ZAP passif
     needs: [sast, sca, coverage, sonar]
