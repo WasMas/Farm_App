@@ -84,7 +84,7 @@ Farm_App/
   scripts/
     init_local.py
     run_backend.py
-  README.md
+  SETUP.md
 ```
 
 If you receive a GitHub repository link, use that repository's clone URL or
@@ -256,8 +256,7 @@ flutter analyze
 flutter test
 ```
 
-For the separate live Flutter/Django/PostgreSQL test runner and native
-Windows/Android configuration, see [README.md](README.md). Native Windows needs
-Developer Mode and the Visual Studio C++ toolchain; Android needs the Android SDK
-and a connected device or emulator. See [PROGRESS.md](PROGRESS.md) for the
-platforms actually verified and the remaining limitations.
+See the [live demo guide](<docs/Test/Test Live Demo Guide.md>) for the Flutter and
+Django commands and the [validation matrix](docs/Test/traceability.md) for tested
+platforms and results. Native Windows builds require Developer Mode and the
+Visual Studio C++ toolchain. Android requires the Android SDK and a device or emulator.

@@ -75,4 +75,4 @@ Sources: [Open-Meteo API](https://open-meteo.com/en/docs),
 No disease/yield prediction, chatbot, advanced expert review, offline sync, or
 automated irrigation control is included. The MVP records actual farm work.
 Native platform packaging/signing is separate from shared Flutter source and
-responsive widget verification; see PROGRESS.md for actual build results.
+responsive widget verification. See the [validation matrix](Test/traceability.md) for build results.

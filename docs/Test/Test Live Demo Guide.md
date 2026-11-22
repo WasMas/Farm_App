@@ -4,7 +4,7 @@ tags: [soutenance, commandes]
 
 # Fieldbook · commandes de soutenance
 
-PowerShell sur le PC de démo, avec PostgreSQL démarré. Pour le passage de 10 minutes, suivre **1 à 3**. La section **4** permet de montrer les navigateurs à la demande. Le texte à dire est dans les notes du [PowerPoint](Fieldbook-Soutenance.pptx).
+PowerShell sur le PC de démo, avec PostgreSQL démarré. Pour le passage de 10 minutes, suivre **1 à 3**. La section **4** permet de montrer les navigateurs à la demande. Le texte à dire est dans les notes du [PowerPoint](Fieldbook-Soutenance.pptx). La [matrice ISO/IEC 25010](traceability.md) relie chaque critère aux tests et aux résultats enregistrés. Pour la diapo 5, ouvrir le [rapport des deux demandes concurrentes](evidence/planting-race.txt).
 
 ## 1 · Préparer avant le passage
 
@@ -85,21 +85,23 @@ java -jar "$env:TEMP\farm-zap-tool\ZAP_2.17.0\zap-2.17.0.jar" -host 127.0.0.1 -p
 
 ```powershell
 cd D:\Farm_App
-$zap = Get-Content docs/quality/evidence/zap-passive.json -Raw | ConvertFrom-Json   # Ouvre le rapport.
+$zap = Get-Content docs/Test/evidence/zap-passive.json -Raw | ConvertFrom-Json   # Ouvre le rapport fourni avec la présentation.
 $zap.findings | Format-Table risk,rule,path,alert -Wrap   # Affiche les alertes par route.
 ```
 
 Montrer la règle **10036** : quatre réponses de l’API révèlent la version du serveur dans l’en-tête `Server`. Le rapport contient aussi deux alertes informatives. [Résultat du job ZAP sur GitHub](https://github.com/WasMas/Farm_App/actions/runs/45043679144/job/137275114891).
 
-**Avant la soutenance** — pour refaire le scan passif et remplacer le rapport local :
+**Pour obtenir un nouveau rapport**, lancer le scan passif depuis la racine du projet.
 
 ```powershell
 cd D:\Farm_App
 $jar = Join-Path $env:TEMP 'farm-zap-tool\ZAP_2.17.0\zap-2.17.0.jar'   # Localise ZAP sur ce PC.
 .\.venv\Scripts\python.exe scripts/demo.py --passive-zap $jar   # Observe la connexion, le tableau de bord et la recherche dans Flutter.
+$zap = Get-Content test-results/zap-passive.json -Raw | ConvertFrom-Json   # Lit le résultat de cette exécution.
+$zap.findings | Format-Table risk,rule,path,alert -Wrap
 ```
 
-Le script démarre sa propre démo. PostgreSQL doit tourner et les ports **8091** et **18000** doivent être libres. Relancer le premier bloc pour afficher le nouveau résultat.
+Le script démarre sa propre démo. PostgreSQL doit tourner et les ports **8091** et **18000** doivent être libres.
 
 ## 6 · Autres commandes si le jury demande
 

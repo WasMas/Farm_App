@@ -156,6 +156,7 @@ def observe(jar, manage, env, root, web_build=None):
                       observed_api_paths=observed, alert_instances=len(alerts),
                       findings=[dict(zip(('rule', 'alert', 'risk', 'confidence', 'path'), row))
                                 for row in sorted(findings)])
-        path = root / 'docs/quality/evidence/zap-passive.json'
+        path = root / 'test-results/zap-passive.json'
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
         print(f'Wrote {path.name}: {len(observed)} API paths, {len(alerts)} alert instances.')

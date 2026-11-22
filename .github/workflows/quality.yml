@@ -345,7 +345,7 @@ jobs:
       - name: Observe owner sign-in, dashboard and activity search
         run: |
           python scripts/demo.py --passive-zap "$RUNNER_TEMP/ZAP_2.17.0/zap-2.17.0.jar" --web-build frontend/build/web
-          cp docs/quality/evidence/zap-passive.json "$RUNNER_TEMP/zap-passive.json"
+          cp test-results/zap-passive.json "$RUNNER_TEMP/zap-passive.json"
       - name: Show alerts in the run summary
         run: |
           {
