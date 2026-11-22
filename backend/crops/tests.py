@@ -1,3 +1,4 @@
+from decimal import Decimal
 from datetime import date, timedelta
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -38,3 +39,24 @@ class CropTests(TestCase):
         url = f'/api/crop-types/{response.data["id"]}/'
         self.assertEqual(self.client.patch(url, {'description': 'Updated'}).status_code, 200)
         self.assertEqual(self.client.delete(url).status_code, 204)
+
+    def check_remaining_hectare(self, area, expected):
+        # Every case starts with two of the field's three hectares occupied.
+        url = '/api/crop-cycles/'
+        self.assertEqual(self.client.post(url, self.payload).status_code, 201)
+        response = self.client.post(url, {**self.payload, 'area': area})
+        self.assertEqual(response.status_code, expected, response.data)
+        if expected == 400:
+            self.assertIn('Active planting areas cannot exceed the field area.', response.data['area'])
+        saved = list(self.field.cycles.order_by('area').values_list('area', flat=True))
+
+        self.assertEqual(saved, [Decimal('2')] if expected == 400 else [Decimal(area), Decimal('2')])
+
+    def test_remaining_hectare_099_accepted(self):
+        self.check_remaining_hectare('0.99', 201)
+
+    def test_remaining_hectare_100_accepted(self):
+        self.check_remaining_hectare('1.00', 201)
+
+    def test_remaining_hectare_101_rejected(self):
+        self.check_remaining_hectare('1.01', 400)

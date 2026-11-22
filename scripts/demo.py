@@ -15,6 +15,7 @@ from psycopg import sql
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true', help='Verify the seeded demo and exit.')
+    parser.add_argument('--passive-zap', metavar='JAR', help='Observe the browser demo with ZAP and exit.')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     load_dotenv(root / 'backend' / '.env')
@@ -33,6 +34,10 @@ def main():
         try:
             for command in [('migrate', '--noinput'), ('ensure_admin',), ('seed_demo', '--reset')]:
                 subprocess.run(manage + list(command), env=env, check=True)
+            if args.passive_zap:
+                from passive_zap import observe
+                observe(args.passive_zap, manage, env, root)
+                return
             if args.check:
                 check = ("from accounts.models import User; from farms.models import Farm; "
                          "from activities.models import Activity; "

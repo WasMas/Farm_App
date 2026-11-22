@@ -88,3 +88,23 @@ Depuis la racine du projet, lancer ce test dans le terminal 3 :
 « Alice et Bob ont tous les deux le droit de planter. Ils demandent chacun le dernier hectare de la même parcelle. Le test maintient brièvement le verrou pour observer la seconde transaction en attente dans PostgreSQL. Une fois le verrou libéré, la seconde demande vérifie à nouveau la surface disponible. »
 
 Montrer **HTTP 201** (plantation créée), **HTTP 400** (surface insuffisante), puis la vérification en base : **une seule plantation d’un hectare**. Alice ou Bob peut réussir. [Exécution enregistrée](evidence/planting-race.txt).
+
+## Compléments du cours — limites, analyse passive et retest
+
+**Valeurs limites.** Depuis la racine du dépôt, lancer les trois cas indépendants :
+
+```powershell
+.\.venv\Scripts\python scripts/test_backend.py crops.tests -k remaining_hectare -v 2
+```
+
+« Il reste exactement 1 hectare. On essaie juste en dessous, exactement à la limite, puis juste au-dessus. La limite est inclusive : 0,99 et 1,00 passent, 1,01 est refusé. » [Résultats enregistrés](evidence/area-boundaries.txt)
+
+**TP3 — ZAP passif.** Pour la présentation, ouvrir le [rapport des routes et alertes](evidence/zap-passive.json). Pour le régénérer sur ce PC, garder PostgreSQL actif et les ports 8091 et 18000 disponibles. La commande crée une base jetable, compile l’interface, démarre ZAP en mode sûr, puis ouvre le parcours propriétaire dans Chromium. Elle utilise Java, Flutter, Playwright et la distribution multiplateforme ZAP 2.17.0. Sur un autre PC, remplacer le chemin du JAR par celui de sa distribution extraite.
+
+```powershell
+cd D:\Farm_App
+$zapJar = Join-Path $env:TEMP 'farm-zap-tool\ZAP_2.17.0\zap-2.17.0.jar'
+.\.venv\Scripts\python scripts/demo.py --passive-zap $zapJar
+```
+
+**TP4 — correction et retest.** Ouvrir la ligne SCA dans la [matrice](traceability.md) : montrer le premier contrôle de dépendances en échec, la mise à jour de setuptools, puis le contrôle réussi sur GitHub.
