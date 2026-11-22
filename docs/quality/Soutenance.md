@@ -71,6 +71,16 @@ Dans **Inspector**, cliquer sur **Step over** pour avancer, ou **Resume ▶** po
 
 ## 5 · Diapo 6 · Montrer les alertes ZAP
 
+**Ouvrir l’interface OWASP ZAP.** Démarrer Django et Flutter (section 2), puis lancer dans un troisième terminal :
+
+```powershell
+java -jar "$env:TEMP\farm-zap-tool\ZAP_2.17.0\zap-2.17.0.jar" -host 127.0.0.1 -port 8092   # Ouvre ZAP Desktop ; le port 8080 reste disponible pour Flutter.
+```
+
+1. Dans ZAP, choisir **Safe Mode**, puis **Quick Start → Manual Explore**.
+2. Saisir `http://localhost:8080`, choisir **Edge** et cliquer sur **Launch Browser**. Dans ce navigateur, se connecter à Fieldbook et ouvrir le journal.
+3. Revenir dans ZAP. En bas, ouvrir **Alerts**, déplier une alerte et sélectionner une URL de l’API (`127.0.0.1:8000`). Montrer le niveau de risque et le champ **Evidence**. [Guide de l’interface ZAP](https://www.zaproxy.org/docs/desktop/ui/)
+
 **Pendant la soutenance** — afficher le rapport déjà enregistré :
 
 ```powershell
