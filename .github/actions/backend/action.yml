@@ -1,17 +1,41 @@
 name: Install Django quality environment
-description: Install the same CPU dependencies and QA tools used by the farm tests
+description: Reuse the installed CI environment across compatible Ubuntu runners
+inputs:
+  fresh:
+    description: Install from requirements for the portability check
+    default: 'false'
 runs:
   using: composite
   steps:
     - uses: actions/setup-python@v5
+      id: python
       with:
         python-version: '3.14'
         cache: pip
         cache-dependency-path: |
           backend/requirements.txt
           scripts/quality-requirements.txt
-    - shell: bash
+    - id: runtime
+      shell: bash
+      run: echo "image=${ImageOS}-${ImageVersion}" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache/restore@v4
+      id: env
+      with:
+        path: ${{ runner.temp }}/farm-venv
+        key: farm-venv-${{ runner.arch }}-${{ steps.runtime.outputs.image }}-${{ steps.python.outputs.python-version }}-${{ hashFiles('backend/requirements.txt', 'scripts/quality-requirements.txt', '.github/actions/backend/action.yml') }}
+        lookup-only: ${{ inputs.fresh == 'true' }}
+    - if: inputs.fresh == 'true' || steps.env.outputs.cache-hit != 'true'
+      shell: bash
       run: |
+        python -m venv "$RUNNER_TEMP/farm-venv"
+        source "$RUNNER_TEMP/farm-venv/bin/activate"
         python -m pip install --upgrade "setuptools>=84.1.0"
         python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
         python -m pip install -r backend/requirements.txt -r scripts/quality-requirements.txt
+    - if: inputs.fresh == 'true' && steps.env.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.temp }}/farm-venv
+        key: ${{ steps.env.outputs.cache-primary-key }}
+    - shell: bash
+      run: echo "$RUNNER_TEMP/farm-venv/bin" >> "$GITHUB_PATH"

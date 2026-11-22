@@ -16,7 +16,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true', help='Verify the seeded demo and exit.')
     parser.add_argument('--passive-zap', metavar='JAR', help='Observe the browser demo with ZAP and exit.')
+    parser.add_argument('--web-build', type=Path, help='Reuse a web release built for the passive ZAP backend on port 18000.')
     args = parser.parse_args()
+    if args.web_build and not args.passive_zap:
+        parser.error('--web-build requires --passive-zap')
     root = Path(__file__).resolve().parents[1]
     load_dotenv(root / 'backend' / '.env')
     database = 'fieldbook_demo_' + uuid4().hex
@@ -36,7 +39,7 @@ def main():
                 subprocess.run(manage + list(command), env=env, check=True)
             if args.passive_zap:
                 from passive_zap import observe
-                observe(args.passive_zap, manage, env, root)
+                observe(args.passive_zap, manage, env, root, args.web_build)
                 return
             if args.check:
                 check = ("from accounts.models import User; from farms.models import Farm; "

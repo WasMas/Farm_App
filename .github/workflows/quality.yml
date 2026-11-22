@@ -37,6 +37,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/backend
+        with:
+          fresh: true
       - name: Migrations et santé HTTP
         run: |
           mkdir -p reports
@@ -62,7 +64,13 @@ jobs:
       - name: Compiler le frontend
         run: |
           cd frontend
-          flutter build web --release --no-web-resources-cdn
+          flutter build web --release --no-web-resources-cdn --dart-define=API_BASE_URL=http://127.0.0.1:18000/api/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flutter-web-ci
+          path: frontend/build/web/
+          if-no-files-found: error
+          retention-days: 1
   unit:
     name: 2 · Tests unitaires Python
     needs: [django, web]
@@ -287,10 +295,10 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/flutter
-      - name: Préparer les sources Dart
-        run: |
-          cd frontend
-          flutter build web --release --no-web-resources-cdn
+      - uses: actions/download-artifact@v4
+        with:
+          name: flutter-web-ci
+          path: frontend/build/web
       - uses: actions/download-artifact@v4
         with:
           name: coverage
@@ -317,7 +325,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/backend
-      - uses: ./.github/actions/flutter
+      - uses: actions/download-artifact@v4
+        with:
+          name: flutter-web-ci
+          path: frontend/build/web
       - name: Contrôler la réponse HTTP protégée
         run: |
           python scripts/test_backend.py core.quality_live.LiveQualityTests.test_unauthenticated_http_response -v 2
@@ -330,7 +341,7 @@ jobs:
           unzip -q zap.zip
       - name: Observe owner sign-in, dashboard and activity search
         run: |
-          python scripts/demo.py --passive-zap "$RUNNER_TEMP/ZAP_2.17.0/zap-2.17.0.jar"
+          python scripts/demo.py --passive-zap "$RUNNER_TEMP/ZAP_2.17.0/zap-2.17.0.jar" --web-build frontend/build/web
           cp docs/quality/evidence/zap-passive.json "$RUNNER_TEMP/zap-passive.json"
       - name: Show alerts in the run summary
         run: |
